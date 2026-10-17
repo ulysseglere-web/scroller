@@ -33,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="app-header">
       <div className="header-left">
         <div className="brand-group">
-          <img src="/favicon.svg" alt="SCROLLER" className="brand-app-logo" />
+          <img src="/logo.png" alt="SCROLLER" className="brand-app-logo" />
           <span className="brand-wordmark">SCROLLER</span>
           <div className="status-live-pill" title="Vous êtes le seul utilisateur de ce réseau">
             <span className="pulse-dot" />

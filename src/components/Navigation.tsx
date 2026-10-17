@@ -39,7 +39,7 @@ export const Navigation: React.FC<NavigationProps> = ({
         <div className="sidebar-top">
           <div className="sidebar-brand" onClick={() => handleTabClick('home')}>
             <div className="sidebar-logo-row">
-              <img src="/favicon.svg" alt="SCROLLER" className="sidebar-brand-logo" />
+              <img src="/logo.png" alt="SCROLLER" className="sidebar-brand-logo" />
               <span className="brand-wordmark">SCROLLER</span>
               <span className="status-indicator-dot" />
             </div>
