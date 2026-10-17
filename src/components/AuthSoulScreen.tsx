@@ -1,4 +1,4 @@
-import React, { useState, useId } from 'react';
+import React, { useState, useId, useEffect } from 'react';
 import { 
   ShieldCheck, 
   Lock, 
@@ -9,7 +9,14 @@ import {
   Camera, 
   Trash2,
   Play,
-  Heart
+  Pause,
+  Heart,
+  Volume2,
+  VolumeX,
+  Zap,
+  HardDrive,
+  EyeOff,
+  Smartphone
 } from 'lucide-react';
 import type { UserProfile } from '../types';
 import { sound } from '../services/sound';
@@ -32,6 +39,52 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
   // Interactive showcase state
   const [activeShowcaseTab, setActiveShowcaseTab] = useState<'feed' | 'reel' | 'vault'>('feed');
   const [showHeartAnim, setShowHeartAnim] = useState(false);
+  const [isFeedLiked, setIsFeedLiked] = useState(true);
+  const [feedLikes, setFeedLikes] = useState(1);
+  const [isReelPlaying, setIsReelPlaying] = useState(false);
+  const [reelProgress, setReelProgress] = useState(38);
+  const [isSoundMuted, setIsSoundMuted] = useState(!sound.getEnabled());
+
+  // Animate reel scrubber when playing
+  useEffect(() => {
+    if (!isReelPlaying) return;
+    const interval = setInterval(() => {
+      setReelProgress((prev) => (prev >= 100 ? 0 : prev + 2.5));
+    }, 180);
+    return () => clearInterval(interval);
+  }, [isReelPlaying]);
+
+  const handleToggleSound = () => {
+    const active = sound.toggle();
+    setIsSoundMuted(!active);
+  };
+
+  const handleLikeMockPost = () => {
+    if (!isFeedLiked) {
+      sound.playHeart();
+      setShowHeartAnim(true);
+      setIsFeedLiked(true);
+      setFeedLikes(1);
+      setTimeout(() => setShowHeartAnim(false), 900);
+    } else {
+      sound.playTap();
+      setIsFeedLiked(false);
+      setFeedLikes(0);
+    }
+  };
+
+  const handleDoubleTapPost = () => {
+    sound.playHeart();
+    setShowHeartAnim(true);
+    setIsFeedLiked(true);
+    setFeedLikes(1);
+    setTimeout(() => setShowHeartAnim(false), 900);
+  };
+
+  const handleToggleReel = () => {
+    sound.playTap();
+    setIsReelPlaying(!isReelPlaying);
+  };
 
   // Register form state
   const [username, setUsername] = useState('');
@@ -157,6 +210,16 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
         </div>
 
         <div className="clean-nav-actions">
+          <button 
+            type="button" 
+            className={`clean-sound-toggle-btn ${!isSoundMuted ? 'active' : ''}`}
+            onClick={handleToggleSound}
+            title={isSoundMuted ? 'Activer le son tactile' : 'Désactiver le son'}
+          >
+            {isSoundMuted ? <VolumeX size={13} /> : <Volume2 size={13} className="sound-active-icon" />}
+            <span>{isSoundMuted ? 'SON MUET' : 'SON ACTIF'}</span>
+          </button>
+
           {existingAccount ? (
             <button 
               className="clean-nav-cta"
@@ -245,6 +308,9 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
 
             {/* Central Phone Mockup */}
             <div className="flagship-phone-frame">
+              {/* Outer Glow Tracer */}
+              <div className="phone-beam-trace" />
+
               {/* Dynamic Island / Speaker */}
               <div className="phone-island">
                 <span className="island-camera" />
@@ -276,12 +342,8 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
 
                     <div 
                       className="mock-image-container"
-                      onClick={() => {
-                        sound.playHeart();
-                        setShowHeartAnim(true);
-                        setTimeout(() => setShowHeartAnim(false), 900);
-                      }}
-                      title="Tapez pour aimer"
+                      onClick={handleDoubleTapPost}
+                      title="Double-cliquez pour aimer"
                     >
                       <img 
                         src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1080&q=85" 
@@ -302,15 +364,12 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
                       <div className="actions-left">
                         <button 
                           type="button" 
-                          className="mock-action-btn loved"
-                          onClick={() => {
-                            sound.playHeart();
-                            setShowHeartAnim(true);
-                            setTimeout(() => setShowHeartAnim(false), 900);
-                          }}
+                          className={`mock-action-btn ${isFeedLiked ? 'loved' : ''}`}
+                          onClick={handleLikeMockPost}
+                          title="Aimer"
                         >
-                          <Heart size={16} fill="#ff1e27" color="#ff1e27" />
-                          <span>1</span>
+                          <Heart size={16} fill={isFeedLiked ? "#ff1e27" : "none"} color={isFeedLiked ? "#ff1e27" : "#ffffff"} />
+                          <span>{feedLikes}</span>
                         </button>
                         <span className="mock-sub-info">Archives personnelles</span>
                       </div>
@@ -330,22 +389,36 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
 
                     <div className="mock-reel-header">
                       <span className="reel-tag">SÉQUENCE IMMERSIVE</span>
-                      <span className="reel-timecode">00:18 / 00:30</span>
+                      <span className="reel-timecode">00:{Math.floor(reelProgress * 0.3).toString().padStart(2, '0')} / 00:30</span>
                     </div>
 
                     <div className="mock-reel-center">
-                      <div className="mock-reel-play-btn">
-                        <Play size={22} fill="#ffffff" />
-                      </div>
+                      <button 
+                        type="button" 
+                        className="mock-reel-play-btn"
+                        onClick={handleToggleReel}
+                        title={isReelPlaying ? 'Pause' : 'Lecture'}
+                      >
+                        {isReelPlaying ? (
+                          <Pause size={22} fill="#ffffff" color="#ffffff" />
+                        ) : (
+                          <Play size={22} fill="#ffffff" color="#ffffff" />
+                        )}
+                      </button>
                     </div>
 
                     <div className="mock-reel-footer">
+                      {/* Scrubber Bar */}
+                      <div className="reel-scrubber-track">
+                        <div className="reel-scrubber-fill" style={{ width: `${reelProgress}%` }} />
+                      </div>
+
                       <div className="reel-track-row">
                         <div className="reel-sound-wave">
-                          <span className="wave-bar w1" />
-                          <span className="wave-bar w2" />
-                          <span className="wave-bar w3" />
-                          <span className="wave-bar w4" />
+                          <span className={`wave-bar w1 ${isReelPlaying ? 'animated' : ''}`} />
+                          <span className={`wave-bar w2 ${isReelPlaying ? 'animated' : ''}`} />
+                          <span className={`wave-bar w3 ${isReelPlaying ? 'animated' : ''}`} />
+                          <span className={`wave-bar w4 ${isReelPlaying ? 'animated' : ''}`} />
                         </div>
                         <span className="reel-track-title">Audio local · 48kHz</span>
                       </div>
@@ -362,26 +435,26 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
                     </div>
 
                     <div className="mock-vault-grid">
-                      <div className="v-grid-cell">
+                      <div className="v-grid-cell" title="Architecture · 14.2 MB">
                         <img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=85" alt="Architecture" />
                         <span className="cell-tag">#01</span>
                       </div>
-                      <div className="v-grid-cell">
+                      <div className="v-grid-cell" title="Boîtier 35mm · 22.8 MB">
                         <img src="https://images.unsplash.com/photo-1495707902641-75cac588d2e9?auto=format&fit=crop&w=600&q=85" alt="35mm Camera" />
                         <span className="cell-tag">#02</span>
                       </div>
-                      <div className="v-grid-cell">
+                      <div className="v-grid-cell" title="Tunnel noir · 19.1 MB">
                         <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=600&q=85" alt="Tunnel noir" />
                         <span className="cell-tag">#03</span>
                       </div>
-                      <div className="v-grid-cell">
+                      <div className="v-grid-cell" title="Néon Red · 16.4 MB">
                         <img src="https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=600&q=85" alt="Neon Red" />
                         <span className="cell-tag">#04</span>
                       </div>
                     </div>
 
                     <div className="mock-vault-footer">
-                      <span className="vault-stat">4 médias chiffrés</span>
+                      <span className="vault-stat">4 médias chiffrés en local</span>
                       <span className="vault-zero">0 octet transmis en ligne</span>
                     </div>
                   </div>
@@ -490,7 +563,49 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
           </div>
         </section>
 
-        {/* 3. MANIFESTE ÉPURÉ EN 3 POINTS */}
+        {/* 3. SOVEREIGN TELEMETRY BENTO GRID */}
+        <section className="clean-telemetry-console">
+          <div className="telemetry-header">
+            <span className="telemetry-tag">SPÉCIFICATIONS SOUVERAINES</span>
+            <h2>Conçu pour l'œil, bâti pour l'indépendance.</h2>
+          </div>
+          <div className="telemetry-grid">
+            <div className="telemetry-cell">
+              <div className="telemetry-top">
+                <Zap size={20} className="cell-ico" />
+                <span className="cell-val">60 FPS · 0ms</span>
+              </div>
+              <h4>Zéro latence réseau</h4>
+              <p>Rendu immédiat depuis la mémoire flash locale. Aucun temps de chargement, aucun tampon serveur.</p>
+            </div>
+            <div className="telemetry-cell">
+              <div className="telemetry-top">
+                <HardDrive size={20} className="cell-ico" />
+                <span className="cell-val">IndexedDB 64-bit</span>
+              </div>
+              <h4>Sanctuaire chiffré</h4>
+              <p>Toutes vos photos et vidéos restent exclusivement confinées dans le navigateur de votre appareil.</p>
+            </div>
+            <div className="telemetry-cell">
+              <div className="telemetry-top">
+                <EyeOff size={20} className="cell-ico" />
+                <span className="cell-val">0% Traçage</span>
+              </div>
+              <h4>Silencieux & Épuré</h4>
+              <p>Zéro publicité ciblée, zéro suggestion sponsorisée, zéro analyse comportementale.</p>
+            </div>
+            <div className="telemetry-cell">
+              <div className="telemetry-top">
+                <Smartphone size={20} className="cell-ico" />
+                <span className="cell-val">4:5 & 9:16 Natif</span>
+              </div>
+              <h4>Plein cadre immersif</h4>
+              <p>Calibré au millimètre pour les écrans modernes OLED et Retina sans bandes noires.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. MANIFESTE ÉPURÉ EN 3 POINTS */}
         <section className="clean-principles">
           <div className="principle-item">
             <span className="principle-num">01</span>
