@@ -2,20 +2,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, 
   Camera, 
-  Video, 
   Image as ImageIcon, 
   PenTool, 
-  BookOpen, 
-  Link2, 
   MapPin, 
-  Tag, 
   Heart, 
-  RefreshCw,
-  StopCircle,
-  Film,
-  Music
+  Trash2,
+  Plus
 } from 'lucide-react';
-import type { PostItem, PostType, NoteStyle } from '../types';
+import type { PostItem, NoteStyle } from '../types';
+import { sound } from '../services/sound';
 
 interface CreateModalProps {
   isOpen: boolean;
@@ -23,50 +18,37 @@ interface CreateModalProps {
   onSavePost: (post: PostItem) => void;
 }
 
-type CaptureMode = 'photo' | 'reel' | 'video' | 'note' | 'quote' | 'link';
+type CaptureMode = 'media' | 'note';
+
+const NOTE_THEMES: { id: NoteStyle['bgTheme']; label: string; bg: string; color: string }[] = [
+  { id: 'dark-monochrome', label: 'Noir Charbon', bg: '#09090b', color: '#ffffff' },
+  { id: 'midnight-violet', label: 'Obsidienne', bg: '#13111c', color: '#f5f3ff' },
+  { id: 'deep-ocean', label: 'Nuit Abyssale', bg: '#08131e', color: '#f0f9ff' },
+  { id: 'warm-amber', label: 'Rubis Sombre', bg: '#1c0d0e', color: '#fff1f2' },
+];
 
 export const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose, onSavePost }) => {
-  const [mode, setMode] = useState<CaptureMode>('photo');
+  const [mode, setMode] = useState<CaptureMode>('media');
 
   // Common fields
   const [caption, setCaption] = useState('');
-  const [tagsInput, setTagsInput] = useState('');
   const [location, setLocation] = useState('');
+  const [showLocationInput, setShowLocationInput] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [privateAnnotation, setPrivateAnnotation] = useState('');
-  const [audioTrack, setAudioTrack] = useState('');
 
-  // Photo & Video state
+  // Media state (photos / carousel / video)
   const [selectedMediaFiles, setSelectedMediaFiles] = useState<string[]>([]);
   const [videoUrl, setVideoUrl] = useState<string>('');
-  
+
   // Note state
   const [noteBody, setNoteBody] = useState('');
-  const [noteBg, setNoteBg] = useState<NoteStyle['bgTheme']>('midnight-violet');
-  const [noteFontSize, setNoteFontSize] = useState<NoteStyle['fontSize']>('large');
+  const [noteBg, setNoteBg] = useState<NoteStyle['bgTheme']>('dark-monochrome');
 
-  // Quote state
-  const [quoteText, setQuoteText] = useState('');
-  const [quoteAuthor, setQuoteAuthor] = useState('');
-  const [quoteSource, setQuoteSource] = useState('');
-  const [quotePage, setQuotePage] = useState('');
-  const [quoteReflection, setQuoteReflection] = useState('');
-
-  // Link state
-  const [linkUrl, setLinkUrl] = useState('');
-  const [linkTitle, setLinkTitle] = useState('');
-  const [linkDomain, setLinkDomain] = useState('');
-  const [linkDesc, setLinkDesc] = useState('');
-  const [linkImg, setLinkImg] = useState('');
-
-  // Camera & Video recording state
+  // Camera state
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [isRecordingVideo, setIsRecordingVideo] = useState(false);
-  const [recordTimer, setRecordTimer] = useState(0);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recordedChunksRef = useRef<Blob[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Stop camera when unmounting or switching modes
   const stopLiveCamera = () => {
@@ -75,7 +57,6 @@ export const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose, onSav
       streamRef.current = null;
     }
     setIsCameraActive(false);
-    setIsRecordingVideo(false);
   };
 
   useEffect(() => {
@@ -91,34 +72,32 @@ export const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose, onSav
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    if (mode === 'video' || mode === 'reel') {
-      const file = files[0];
-      const url = URL.createObjectURL(file);
-      setVideoUrl(url);
-    } else {
-      const urls: string[] = [];
-      Array.from(files).forEach((file) => {
+    Array.from(files).forEach((file) => {
+      if (file.type.startsWith('video/')) {
+        const url = URL.createObjectURL(file);
+        setVideoUrl(url);
+      } else {
         const reader = new FileReader();
         reader.onload = (event) => {
           if (event.target?.result) {
-            urls.push(event.target.result as string);
-            if (urls.length === files.length) {
-              setSelectedMediaFiles((prev) => [...prev, ...urls]);
-            }
+            setSelectedMediaFiles((prev) => [...prev, event.target!.result as string]);
           }
         };
         reader.readAsDataURL(file);
-      });
-    }
+      }
+    });
+
+    // Reset input value to allow re-upload of same file if needed
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   // Live Camera Activation
-  const startLiveCamera = async (recordVideo = false) => {
+  const startLiveCamera = async () => {
     stopLiveCamera();
     try {
       const constraints: MediaStreamConstraints = {
         video: { facingMode: 'environment' },
-        audio: recordVideo,
+        audio: false,
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
@@ -127,7 +106,7 @@ export const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose, onSav
         videoPreviewRef.current.play();
       }
       setIsCameraActive(true);
-    } catch (err) {
+    } catch {
       alert('Impossible d’accéder à la caméra. Vérifiez les autorisations de votre navigateur.');
     }
   };
@@ -143,220 +122,118 @@ export const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose, onSav
       ctx.drawImage(videoPreviewRef.current, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
       setSelectedMediaFiles((prev) => [...prev, dataUrl]);
+      sound.playPop();
     }
     stopLiveCamera();
   };
 
-  // Video recording
-  const startVideoRecording = async () => {
-    await startLiveCamera(true);
-    if (!streamRef.current) return;
-
-    recordedChunksRef.current = [];
-    try {
-      const recorder = new MediaRecorder(streamRef.current);
-      mediaRecorderRef.current = recorder;
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          recordedChunksRef.current.push(e.data);
-        }
-      };
-
-      recorder.onstop = () => {
-        const blob = new Blob(recordedChunksRef.current, { type: 'video/mp4' });
-        const url = URL.createObjectURL(blob);
-        setVideoUrl(url);
-        stopLiveCamera();
-      };
-
-      recorder.start();
-      setIsRecordingVideo(true);
-      setRecordTimer(0);
-      const interval = setInterval(() => {
-        setRecordTimer((t) => t + 1);
-      }, 1000);
-      recorder.onstart = () => {
-        // tracking
-      };
-      // auto stop after 60s
-      setTimeout(() => {
-        if (recorder.state === 'recording') {
-          recorder.stop();
-          clearInterval(interval);
-        }
-      }, 60000);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const stopVideoRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-    }
-  };
-
-  // Auto extract domain and default title for link
-  const handleLinkUrlBlur = () => {
-    if (!linkUrl) return;
-    try {
-      let validUrl = linkUrl;
-      if (!/^https?:\/\//i.test(validUrl)) {
-        validUrl = 'https://' + validUrl;
-        setLinkUrl(validUrl);
-      }
-      const parsed = new URL(validUrl);
-      setLinkDomain(parsed.hostname.replace('www.', ''));
-      if (!linkTitle) {
-        setLinkTitle(parsed.hostname.replace('www.', '') + ' — Découverte');
-      }
-    } catch {
-      // not a full url yet
-    }
-  };
-
-  // Save the new post
   const handleSave = () => {
-    const tags = tagsInput
-      .split(/[\s,#]+/)
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
-
-    let finalType: PostType = mode;
-    if (mode === 'photo' && selectedMediaFiles.length > 1) {
-      finalType = 'carousel';
-    }
-
-    const newPost: PostItem = {
-      id: 'scroller-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6),
-      type: finalType,
-      createdAt: new Date().toISOString(),
-      caption: caption.trim(),
-      tags,
-      location: location.trim() || undefined,
-      isFavorite,
-      privateAnnotation: privateAnnotation.trim() || undefined,
-    };
-
-    if (finalType === 'photo' || finalType === 'carousel') {
-      if (selectedMediaFiles.length === 0) {
-        alert('Veuillez ajouter au moins une photo ou capturer un cliché.');
+    if (mode === 'media') {
+      if (selectedMediaFiles.length === 0 && !videoUrl) {
+        alert('Veuillez ajouter au moins une photo ou une vidéo.');
         return;
       }
-      newPost.mediaUrls = selectedMediaFiles;
-    } else if (finalType === 'video' || finalType === 'reel') {
-      if (!videoUrl) {
-        alert('Veuillez sélectionner ou enregistrer une vidéo.');
-        return;
-      }
-      newPost.videoUrl = videoUrl;
-      if (finalType === 'reel') {
-        newPost.audioTrack = audioTrack.trim() || '♫ Son original — ' + (location || 'Moi');
-      }
-    } else if (finalType === 'note') {
+
+      const isVideo = Boolean(videoUrl);
+      const isCarousel = selectedMediaFiles.length > 1;
+
+      const newPost: PostItem = {
+        id: `post_${Date.now()}`,
+        type: isVideo ? 'video' : isCarousel ? 'carousel' : 'photo',
+        createdAt: new Date().toISOString(),
+        caption: caption.trim(),
+        mediaUrls: isVideo ? undefined : selectedMediaFiles,
+        videoUrl: isVideo ? videoUrl : undefined,
+        tags: [],
+        location: location.trim() || undefined,
+        isFavorite,
+      };
+
+      sound.playChime();
+      onSavePost(newPost);
+    } else {
       if (!noteBody.trim()) {
-        alert('Veuillez écrire votre pensée ou réflexion.');
+        alert('Veuillez écrire votre pensée.');
         return;
       }
-      newPost.noteBody = noteBody.trim();
-      newPost.noteStyle = { bgTheme: noteBg, fontSize: noteFontSize };
-    } else if (finalType === 'quote') {
-      if (!quoteText.trim() || !quoteAuthor.trim()) {
-        alert('Veuillez renseigner la citation et son auteur.');
-        return;
-      }
-      newPost.quoteData = {
-        quote: quoteText.trim(),
-        author: quoteAuthor.trim(),
-        source: quoteSource.trim() || undefined,
-        page: quotePage.trim() || undefined,
-        reflection: quoteReflection.trim() || undefined,
+
+      const newPost: PostItem = {
+        id: `post_${Date.now()}`,
+        type: 'note',
+        createdAt: new Date().toISOString(),
+        caption: '',
+        noteBody: noteBody.trim(),
+        noteStyle: { bgTheme: noteBg, fontSize: 'large' },
+        tags: [],
+        location: location.trim() || undefined,
+        isFavorite,
       };
-    } else if (finalType === 'link') {
-      if (!linkUrl.trim()) {
-        alert('Veuillez renseigner une URL valide.');
-        return;
-      }
-      newPost.linkData = {
-        url: linkUrl.trim(),
-        title: linkTitle.trim() || linkDomain || linkUrl,
-        domain: linkDomain || 'web',
-        description: linkDesc.trim() || undefined,
-        image: linkImg.trim() || undefined,
-      };
+
+      sound.playChime();
+      onSavePost(newPost);
     }
 
-    onSavePost(newPost);
     stopLiveCamera();
     onClose();
   };
 
+  const canPublish = mode === 'media' 
+    ? (selectedMediaFiles.length > 0 || Boolean(videoUrl))
+    : noteBody.trim().length > 0;
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="create-modal-container" onClick={(e) => e.stopPropagation()}>
+      <div className="create-modal-container simplified-creator" onClick={(e) => e.stopPropagation()}>
         {/* Modal Header */}
         <div className="create-modal-header">
           <button className="btn-close-modal" onClick={onClose} aria-label="Fermer">
-            <X size={22} />
+            <X size={20} />
           </button>
-          <h2 className="create-modal-title">Nouveau souvenir</h2>
-          <button className="btn-publish-action" onClick={handleSave}>
-            Enregistrer
+
+          {/* Segmented Switch: Média vs Pensée */}
+          <div className="creator-segmented-tabs">
+            <button
+              type="button"
+              className={`segmented-tab ${mode === 'media' ? 'active' : ''}`}
+              onClick={() => {
+                sound.playTap();
+                stopLiveCamera();
+                setMode('media');
+              }}
+            >
+              <ImageIcon size={15} />
+              <span>Média</span>
+            </button>
+            <button
+              type="button"
+              className={`segmented-tab ${mode === 'note' ? 'active' : ''}`}
+              onClick={() => {
+                sound.playTap();
+                stopLiveCamera();
+                setMode('note');
+              }}
+            >
+              <PenTool size={15} />
+              <span>Pensée</span>
+            </button>
+          </div>
+
+          <button 
+            type="button" 
+            className="btn-publish-action" 
+            onClick={handleSave}
+            disabled={!canPublish}
+            style={{ opacity: canPublish ? 1 : 0.4 }}
+          >
+            Publier
           </button>
         </div>
 
-        {/* Content Type Selector Tabs */}
-        <div className="create-type-tabs">
-          <button
-            className={`type-tab-btn ${mode === 'photo' ? 'active' : ''}`}
-            onClick={() => { stopLiveCamera(); setMode('photo'); }}
-          >
-            <ImageIcon size={18} />
-            <span>Photo</span>
-          </button>
-          <button
-            className={`type-tab-btn ${mode === 'reel' ? 'active' : ''}`}
-            onClick={() => { stopLiveCamera(); setMode('reel'); }}
-          >
-            <Film size={18} />
-            <span>Reel</span>
-          </button>
-          <button
-            className={`type-tab-btn ${mode === 'video' ? 'active' : ''}`}
-            onClick={() => { stopLiveCamera(); setMode('video'); }}
-          >
-            <Video size={18} />
-            <span>Vidéo</span>
-          </button>
-          <button
-            className={`type-tab-btn ${mode === 'note' ? 'active' : ''}`}
-            onClick={() => { stopLiveCamera(); setMode('note'); }}
-          >
-            <PenTool size={18} />
-            <span>Pensée</span>
-          </button>
-          <button
-            className={`type-tab-btn ${mode === 'quote' ? 'active' : ''}`}
-            onClick={() => { stopLiveCamera(); setMode('quote'); }}
-          >
-            <BookOpen size={18} />
-            <span>Citation</span>
-          </button>
-          <button
-            className={`type-tab-btn ${mode === 'link' ? 'active' : ''}`}
-            onClick={() => { stopLiveCamera(); setMode('link'); }}
-          >
-            <Link2 size={18} />
-            <span>Lien</span>
-          </button>
-        </div>
-
-        {/* Main Capture Workspace */}
+        {/* Modal Content Body */}
         <div className="create-modal-body">
-          {/* 1. PHOTO MODE */}
-          {mode === 'photo' && (
-            <div className="capture-workspace">
+          {/* MODE 1: MEDIA (Photo / Carrousel / Vidéo) */}
+          {mode === 'media' && (
+            <div className="simple-media-creator">
               {isCameraActive ? (
                 <div className="live-camera-view">
                   <video ref={videoPreviewRef} className="live-camera-stream" autoPlay playsInline />
@@ -369,345 +246,207 @@ export const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose, onSav
                     </button>
                   </div>
                 </div>
-              ) : selectedMediaFiles.length > 0 ? (
-                <div className="selected-photos-preview">
-                  <div className="photos-grid-preview">
-                    {selectedMediaFiles.map((src, i) => (
-                      <div key={i} className="photo-thumb-wrap">
-                        <img src={src} alt="Preview" />
+              ) : selectedMediaFiles.length === 0 && !videoUrl ? (
+                <div className="media-empty-dropzone">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*,video/*"
+                    multiple
+                    style={{ display: 'none' }}
+                    onChange={handleFileChange}
+                  />
+
+                  <div className="dropzone-center-content">
+                    <div className="dropzone-icon-circle">
+                      <ImageIcon size={32} />
+                    </div>
+                    <h3>Ajouter photos ou vidéo</h3>
+                    <p>Vos souvenirs restent 100% privés dans votre sanctuaire.</p>
+
+                    <div className="dropzone-actions-row">
+                      <button
+                        type="button"
+                        className="btn-select-library"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <ImageIcon size={16} />
+                        <span>Sélectionner sur l'appareil</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn-direct-camera"
+                        onClick={startLiveCamera}
+                      >
+                        <Camera size={16} />
+                        <span>Prendre une photo</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="media-preview-deck">
+                  {/* Vidéo sélectionnée */}
+                  {videoUrl && (
+                    <div className="video-preview-wrapper">
+                      <video src={videoUrl} controls playsInline className="video-preview-element" />
+                      <button 
+                        type="button" 
+                        className="btn-remove-media" 
+                        onClick={() => setVideoUrl('')}
+                        title="Supprimer la vidéo"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Photos / Carrousel */}
+                  {selectedMediaFiles.length > 0 && (
+                    <div className="photos-preview-strip">
+                      <div className="photos-thumb-gallery">
+                        {selectedMediaFiles.map((url, i) => (
+                          <div key={i} className="photo-thumb-card">
+                            <img src={url} alt={`Aperçu ${i + 1}`} />
+                            <button
+                              type="button"
+                              className="btn-remove-thumb"
+                              onClick={() => {
+                                sound.playPop();
+                                setSelectedMediaFiles((prev) => prev.filter((_, idx) => idx !== i));
+                              }}
+                              title="Retirer"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))}
+
                         <button
-                          className="btn-remove-thumb"
-                          onClick={() => setSelectedMediaFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                          type="button"
+                          className="btn-add-more-thumb"
+                          onClick={() => fileInputRef.current?.click()}
+                          title="Ajouter d'autres photos pour créer un carrousel"
                         >
-                          <X size={14} />
+                          <Plus size={20} />
+                          <span>Ajouter</span>
                         </button>
                       </div>
-                    ))}
-                  </div>
-                  <div className="add-more-photos-row">
-                    <label className="btn-add-more">
-                      <span>+ Ajouter d'autres photos</span>
-                      <input type="file" accept="image/*" multiple onChange={handleFileChange} hidden />
-                    </label>
-                    <button className="btn-add-more" onClick={() => startLiveCamera(false)}>
-                      <Camera size={16} /> <span>Caméra</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="empty-capture-box">
-                  <div className="capture-choice-buttons">
-                    <label className="capture-big-button upload-btn">
-                      <ImageIcon size={32} />
-                      <span className="lead">Importer depuis vos fichiers</span>
-                      <span className="sub">Sélectionnez une ou plusieurs images</span>
-                      <input type="file" accept="image/*" multiple onChange={handleFileChange} hidden />
-                    </label>
-                    <button className="capture-big-button camera-btn" onClick={() => startLiveCamera(false)}>
-                      <Camera size={32} />
-                      <span className="lead">Prendre une photo</span>
-                      <span className="sub">Utiliser la caméra de votre appareil</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
-          {/* REEL MODE (Short Vertical Video) */}
-          {mode === 'reel' && (
-            <div className="capture-workspace">
-              {isRecordingVideo ? (
-                <div className="live-camera-view reel-camera-view">
-                  <video ref={videoPreviewRef} className="live-camera-stream reel-stream" autoPlay playsInline muted />
-                  <div className="recording-indicator">
-                    <div className="recording-dot blink" />
-                    <span>00:{recordTimer < 10 ? `0${recordTimer}` : recordTimer} (Reel 9:16)</span>
-                  </div>
-                  <div className="live-camera-controls">
-                    <button className="camera-snap-btn stop-rec" onClick={stopVideoRecording} title="Arrêter l'enregistrement">
-                      <StopCircle size={36} fill="#ef4444" color="#ffffff" />
-                    </button>
-                  </div>
-                </div>
-              ) : videoUrl ? (
-                <div className="video-ready-preview">
-                  <video src={videoUrl} controls className="preview-video-player" playsInline />
-                  <div className="reel-audio-name-field">
-                    <Music size={16} />
-                    <input
-                      type="text"
-                      placeholder="Nom de la bande-son (ex: ♫ Jazz Lo-Fi, ♫ Son original)"
-                      value={audioTrack}
-                      onChange={(e) => setAudioTrack(e.target.value)}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        style={{ display: 'none' }}
+                        onChange={handleFileChange}
+                      />
+                    </div>
+                  )}
+
+                  {/* Légende épurée type Instagram */}
+                  <div className="caption-input-block">
+                    <textarea
+                      placeholder="Écrire une légende..."
+                      value={caption}
+                      onChange={(e) => setCaption(e.target.value)}
+                      rows={3}
+                      className="clean-caption-textarea"
                     />
                   </div>
-                  <button className="btn-retake" onClick={() => setVideoUrl('')}>
-                    <RefreshCw size={16} /> <span>Changer de Reel</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="empty-capture-box">
-                  <div className="capture-choice-buttons">
-                    <label className="capture-big-button upload-btn">
-                      <Film size={34} />
-                      <span className="lead">Importer un Reel vertical</span>
-                      <span className="sub">Vidéo 9:16 pour votre flux de Reels</span>
-                      <input type="file" accept="video/*" onChange={handleFileChange} hidden />
-                    </label>
-                    <button className="capture-big-button camera-btn" onClick={startVideoRecording}>
-                      <Camera size={34} />
-                      <span className="lead">Enregistrer un Reel en direct</span>
-                      <span className="sub">Format vertical court avec micro</span>
-                    </button>
-                  </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* 2. VIDEO MODE */}
-          {mode === 'video' && (
-            <div className="capture-workspace">
-              {isRecordingVideo ? (
-                <div className="live-camera-view">
-                  <video ref={videoPreviewRef} className="live-camera-stream" autoPlay playsInline muted />
-                  <div className="recording-indicator">
-                    <div className="recording-dot blink" />
-                    <span>00:{recordTimer < 10 ? `0${recordTimer}` : recordTimer}</span>
-                  </div>
-                  <div className="live-camera-controls">
-                    <button className="camera-snap-btn stop-rec" onClick={stopVideoRecording} title="Arrêter l'enregistrement">
-                      <StopCircle size={36} fill="#ef4444" color="#ffffff" />
-                    </button>
-                  </div>
-                </div>
-              ) : videoUrl ? (
-                <div className="video-ready-preview">
-                  <video src={videoUrl} controls className="preview-video-player" playsInline />
-                  <button className="btn-retake" onClick={() => setVideoUrl('')}>
-                    <RefreshCw size={16} /> <span>Choisir une autre vidéo</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="empty-capture-box">
-                  <div className="capture-choice-buttons">
-                    <label className="capture-big-button upload-btn">
-                      <Video size={32} />
-                      <span className="lead">Importer une vidéo</span>
-                      <span className="sub">Fichier MP4, WebM ou MOV</span>
-                      <input type="file" accept="video/*" onChange={handleFileChange} hidden />
-                    </label>
-                    <button className="capture-big-button camera-btn" onClick={startVideoRecording}>
-                      <Camera size={32} />
-                      <span className="lead">Enregistrer une vidéo</span>
-                      <span className="sub">Capture spontanée avec le micro</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 3. NOTE MODE */}
+          {/* MODE 2: NOTE (Pensée libre) */}
           {mode === 'note' && (
-            <div className="note-editor-workspace">
-              <div className={`note-preview-canvas theme-${noteBg}`}>
+            <div className="simple-note-creator">
+              <div 
+                className="note-freeform-canvas"
+                style={{ 
+                  backgroundColor: NOTE_THEMES.find(t => t.id === noteBg)?.bg || '#09090b',
+                  color: NOTE_THEMES.find(t => t.id === noteBg)?.color || '#ffffff'
+                }}
+              >
                 <textarea
-                  className={`note-input-area ${noteFontSize === 'huge' ? 'font-huge' : 'font-large'}`}
-                  placeholder="Écrivez une pensée, un fragment d'idée, une étincelle..."
+                  className="note-freeform-textarea"
+                  placeholder="Une pensée, une idée, un fragment..."
                   value={noteBody}
                   onChange={(e) => setNoteBody(e.target.value)}
-                  rows={5}
+                  rows={6}
+                  autoFocus
                 />
               </div>
 
-              <div className="note-style-toolbar">
-                <span className="style-label">Ambiance :</span>
-                <div className="theme-circles-row">
-                  {[
-                    { id: 'midnight-violet', bg: '#2e1065' },
-                    { id: 'dark-monochrome', bg: '#171717' },
-                    { id: 'warm-amber', bg: '#78350f' },
-                    { id: 'deep-ocean', bg: '#0c4a6e' },
-                    { id: 'emerald', bg: '#064e3b' },
-                  ].map((t) => (
+              {/* Sélecteur de nuance de fond discret */}
+              <div className="note-palette-selector">
+                <span className="palette-label">Ambiance</span>
+                <div className="palette-dots-row">
+                  {NOTE_THEMES.map((theme) => (
                     <button
-                      key={t.id}
-                      className={`color-picker-dot ${noteBg === t.id ? 'active' : ''}`}
-                      style={{ backgroundColor: t.bg }}
-                      onClick={() => setNoteBg(t.id as NoteStyle['bgTheme'])}
+                      key={theme.id}
+                      type="button"
+                      className={`palette-dot ${noteBg === theme.id ? 'active' : ''}`}
+                      style={{ backgroundColor: theme.bg }}
+                      onClick={() => setNoteBg(theme.id)}
+                      title={theme.label}
                     />
                   ))}
                 </div>
+              </div>
+            </div>
+          )}
 
-                <div className="font-size-toggle">
-                  <button
-                    className={`size-btn ${noteFontSize === 'large' ? 'active' : ''}`}
-                    onClick={() => setNoteFontSize('large')}
+          {/* Barre d'options légères (Lieu + Favori) */}
+          <div className="creator-sub-toolbar">
+            <div className="sub-tools-left">
+              {showLocationInput ? (
+                <div className="location-inline-input">
+                  <MapPin size={14} className="location-pin-icon" />
+                  <input
+                    type="text"
+                    placeholder="Lieu (ex: Paris, Chez moi...)"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    autoFocus
+                  />
+                  <button 
+                    type="button" 
+                    className="btn-clear-loc"
+                    onClick={() => {
+                      setLocation('');
+                      setShowLocationInput(false);
+                    }}
                   >
-                    Normal
-                  </button>
-                  <button
-                    className={`size-btn ${noteFontSize === 'huge' ? 'active' : ''}`}
-                    onClick={() => setNoteFontSize('huge')}
-                  >
-                    Grand
+                    <X size={12} />
                   </button>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* 4. QUOTE MODE */}
-          {mode === 'quote' && (
-            <div className="quote-editor-workspace">
-              <div className="quote-styled-box">
-                <textarea
-                  className="quote-text-input"
-                  placeholder="« Inscrivez ici la citation ou le passage de lecture qui vous a marqué... »"
-                  value={quoteText}
-                  onChange={(e) => setQuoteText(e.target.value)}
-                  rows={4}
-                />
-                <div className="quote-inputs-grid">
-                  <input
-                    type="text"
-                    className="quote-meta-input"
-                    placeholder="Auteur (ex: Sénèque, Albert Camus...)"
-                    value={quoteAuthor}
-                    onChange={(e) => setQuoteAuthor(e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    className="quote-meta-input"
-                    placeholder="Livre ou source (ex: L'Étranger)"
-                    value={quoteSource}
-                    onChange={(e) => setQuoteSource(e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    className="quote-meta-input page-input"
-                    placeholder="Page (ex: p. 42)"
-                    value={quotePage}
-                    onChange={(e) => setQuotePage(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="quote-reflection-input-wrap">
-                <label>Pourquoi cette phrase résonne-t-elle pour vous ? (Optionnel)</label>
-                <input
-                  type="text"
-                  placeholder="Mon ancrage personnel..."
-                  value={quoteReflection}
-                  onChange={(e) => setQuoteReflection(e.target.value)}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* 5. LINK MODE */}
-          {mode === 'link' && (
-            <div className="link-editor-workspace">
-              <div className="link-input-group">
-                <label>URL du lien web ou de l'article :</label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
-                  onBlur={handleLinkUrlBlur}
-                />
-              </div>
-              <div className="link-input-group">
-                <label>Titre personnalisé :</label>
-                <input
-                  type="text"
-                  placeholder="Titre de la ressource"
-                  value={linkTitle}
-                  onChange={(e) => setLinkTitle(e.target.value)}
-                />
-              </div>
-              <div className="link-input-group">
-                <label>Description ou extrait marquant :</label>
-                <textarea
-                  placeholder="Ce que j'ai retenu de cette lecture..."
-                  value={linkDesc}
-                  onChange={(e) => setLinkDesc(e.target.value)}
-                  rows={2}
-                />
-              </div>
-              <div className="link-input-group">
-                <label>Image d'illustration (URL optionnelle) :</label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
-                  value={linkImg}
-                  onChange={(e) => setLinkImg(e.target.value)}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Meta Information Accordion (Caption, Tags, Location, Favorite) */}
-          <div className="create-metadata-section">
-            <div className="meta-field caption-field">
-              <textarea
-                placeholder="Ajouter une légende ou un souvenir..."
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                rows={2}
-              />
-              <input
-                type="text"
-                placeholder="Note intime personnelle (visible uniquement par vous)..."
-                value={privateAnnotation}
-                onChange={(e) => setPrivateAnnotation(e.target.value)}
-                style={{
-                  marginTop: '6px',
-                  width: '100%',
-                  background: 'var(--bg-secondary)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '7px 10px',
-                  fontSize: '12.5px',
-                  outline: 'none'
-                }}
-              />
+              ) : (
+                <button
+                  type="button"
+                  className={`sub-tool-btn ${location ? 'has-val' : ''}`}
+                  onClick={() => setShowLocationInput(true)}
+                >
+                  <MapPin size={15} />
+                  <span>{location || 'Ajouter un lieu'}</span>
+                </button>
+              )}
             </div>
 
-            <div className="meta-row">
-              <div className="meta-icon-input">
-                <Tag size={17} className="meta-icon" />
-                <input
-                  type="text"
-                  placeholder="Mots-clés (ex: lecture, voyage, rituel)"
-                  value={tagsInput}
-                  onChange={(e) => setTagsInput(e.target.value)}
-                />
-              </div>
-
-              <div className="meta-icon-input">
-                <MapPin size={17} className="meta-icon" />
-                <input
-                  type="text"
-                  placeholder="Lieu (ex: Paris, Chez moi)"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="meta-toggle-row">
-              <button
-                type="button"
-                className={`favorite-toggle-btn ${isFavorite ? 'active' : ''}`}
-                onClick={() => setIsFavorite(!isFavorite)}
-              >
-                <Heart size={18} fill={isFavorite ? '#ff1e27' : 'none'} color={isFavorite ? '#ff1e27' : 'currentColor'} />
-                <span>Marquer comme favori</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              className={`btn-toggle-favorite-sub ${isFavorite ? 'favorited' : ''}`}
+              onClick={() => {
+                sound.playHeart();
+                setIsFavorite(!isFavorite);
+              }}
+              title={isFavorite ? 'Retirer des favoris' : 'Marquer comme favori'}
+            >
+              <Heart size={16} fill={isFavorite ? '#ff1e27' : 'none'} color={isFavorite ? '#ff1e27' : '#94a3b8'} />
+              <span>Favori</span>
+            </button>
           </div>
         </div>
       </div>
