@@ -311,10 +311,10 @@
   z-index: 90;
   width: 100%;
   height: var(--header-height);
-  background: rgba(0, 0, 0, 0.88);
+  background: var(--header-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--border-subtle);
   border-inline: none;
   display: flex;
   align-items: center;
@@ -354,7 +354,7 @@
   font-size: 17px;
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .header-actions {
@@ -366,7 +366,7 @@
 .header-icon-btn {
   background: transparent;
   border: none;
-  color: #ffffff;
+  color: var(--text-primary);
   padding: 6px;
   border-radius: 50%;
   display: flex;
@@ -409,10 +409,10 @@
   left: 0;
   width: 100%;
   z-index: 150;
-  background: rgba(0, 0, 0, 0.95);
+  background: var(--dock-bg);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--border-subtle);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   box-sizing: content-box;
 }
@@ -441,7 +441,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #71717a;
+  color: var(--text-tertiary);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -454,7 +454,7 @@
 }
 
 .dock-item.active {
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .dock-item:active {
@@ -462,7 +462,7 @@
 }
 
 .dock-item.dock-create-btn {
-  color: #ffffff;
+  color: var(--text-primary);
   background: transparent;
   border: none;
   border-radius: 0;
@@ -482,7 +482,7 @@
 }
 
 .dock-avatar-wrap.ring-active {
-  border-color: #ffffff;
+  border-color: var(--text-primary);
 }
 
 .dock-avatar-img {

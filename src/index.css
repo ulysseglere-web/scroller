@@ -9,6 +9,9 @@
   --border-subtle: rgba(0, 0, 0, 0.06);
   --border-glass: rgba(0, 0, 0, 0.15);
   
+  --header-bg: rgba(255, 255, 255, 0.88);
+  --dock-bg: rgba(255, 255, 255, 0.92);
+  
   --text-primary: #000000;
   --text-secondary: #52525b;
   --text-tertiary: #a1a1aa;
@@ -51,6 +54,9 @@
   --border-subtle: rgba(255, 255, 255, 0.06);
   --border-glass: rgba(255, 255, 255, 0.18);
   
+  --header-bg: rgba(0, 0, 0, 0.88);
+  --dock-bg: rgba(0, 0, 0, 0.95);
+
   --text-primary: #ffffff;
   --text-secondary: #a1a1aa;
   --text-tertiary: #71717a;
