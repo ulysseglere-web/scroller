@@ -7,10 +7,15 @@ import {
   MapPin, 
   Heart, 
   Trash2,
-  Plus
+  Plus,
+  Music,
+  Play,
+  Pause,
+  Upload
 } from 'lucide-react';
 import type { PostItem, NoteStyle } from '../types';
 import { sound } from '../services/sound';
+import { AMBIENT_PRESETS, ambientAudio, type AudioPreset } from '../services/ambientAudio';
 
 interface CreateModalProps {
   isOpen: boolean;
@@ -47,6 +52,12 @@ export const CreateModal: React.FC<CreateModalProps> = ({
   // Media state (photos / carousel / video)
   const [selectedMediaFiles, setSelectedMediaFiles] = useState<string[]>(initialFiles);
   const [videoUrl, setVideoUrl] = useState<string>('');
+
+  // Audio state for Reels / Videos
+  const [audioTrack, setAudioTrack] = useState<string>('');
+  const [audioUrl, setAudioUrl] = useState<string>('');
+  const [isPreviewingAudio, setIsPreviewingAudio] = useState(false);
+  const audioFileInputRef = useRef<HTMLInputElement>(null);
 
   // Note state
   const [noteBody, setNoteBody] = useState('');
@@ -85,11 +96,60 @@ export const CreateModal: React.FC<CreateModalProps> = ({
     setIsCameraActive(false);
   };
 
+  const stopAudio = () => {
+    ambientAudio.stop();
+    setIsPreviewingAudio(false);
+  };
+
   useEffect(() => {
     if (!isOpen) {
       stopLiveCamera();
+      stopAudio();
     }
   }, [isOpen]);
+
+  const handleSelectPreset = (preset: AudioPreset) => {
+    if (audioUrl === preset.id) {
+      setAudioUrl('');
+      setAudioTrack('');
+      stopAudio();
+    } else {
+      setAudioUrl(preset.id);
+      setAudioTrack(preset.name);
+      sound.playTap();
+      ambientAudio.play(preset.id, false);
+      setIsPreviewingAudio(true);
+    }
+  };
+
+  const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (ev.target?.result) {
+        const dataUrl = ev.target.result as string;
+        setAudioUrl(dataUrl);
+        setAudioTrack(file.name.replace(/\.[^/.]+$/, ''));
+        sound.playPop();
+        ambientAudio.play(dataUrl, false);
+        setIsPreviewingAudio(true);
+      }
+    };
+    reader.readAsDataURL(file);
+    if (audioFileInputRef.current) audioFileInputRef.current.value = '';
+  };
+
+  const togglePreview = () => {
+    if (!audioUrl) return;
+    if (isPreviewingAudio) {
+      stopAudio();
+    } else {
+      ambientAudio.play(audioUrl, false);
+      setIsPreviewingAudio(true);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -165,11 +225,13 @@ export const CreateModal: React.FC<CreateModalProps> = ({
 
       const newPost: PostItem = {
         id: `post_${Date.now()}`,
-        type: isVideo ? 'video' : isCarousel ? 'carousel' : 'photo',
+        type: isVideo ? 'reel' : isCarousel ? 'carousel' : 'photo',
         createdAt: new Date().toISOString(),
         caption: caption.trim(),
         mediaUrls: isVideo ? undefined : selectedMediaFiles,
         videoUrl: isVideo ? videoUrl : undefined,
+        audioTrack: isVideo ? (audioTrack.trim() || undefined) : undefined,
+        audioUrl: isVideo ? (audioUrl || undefined) : undefined,
         tags: [],
         location: location.trim() || undefined,
         isFavorite,
@@ -200,6 +262,7 @@ export const CreateModal: React.FC<CreateModalProps> = ({
     }
 
     stopLiveCamera();
+    stopAudio();
     onClose();
   };
 
@@ -320,11 +383,83 @@ export const CreateModal: React.FC<CreateModalProps> = ({
                       <button 
                         type="button" 
                         className="btn-remove-media" 
-                        onClick={() => setVideoUrl('')}
+                        onClick={() => {
+                          setVideoUrl('');
+                          setAudioUrl('');
+                          setAudioTrack('');
+                          stopAudio();
+                        }}
                         title="Supprimer la vidéo"
                       >
                         <Trash2 size={14} />
                       </button>
+                    </div>
+                  )}
+
+                  {/* Panneau Audio & Bande-son pour Reel/Vidéo */}
+                  {videoUrl && (
+                    <div className="reel-audio-config-panel">
+                      <div className="audio-config-header">
+                        <div className="audio-header-title">
+                          <Music size={16} className="text-crimson" />
+                          <span>Bande-son du Reel</span>
+                        </div>
+                        {audioUrl && (
+                          <button
+                            type="button"
+                            className={`btn-preview-audio ${isPreviewingAudio ? 'playing' : ''}`}
+                            onClick={togglePreview}
+                            title={isPreviewingAudio ? 'Arrêter la pré-écoute' : 'Écouter'}
+                          >
+                            {isPreviewingAudio ? <Pause size={13} /> : <Play size={13} fill="#ffffff" />}
+                            <span>{isPreviewingAudio ? 'Arrêter' : 'Écouter'}</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Ambiances sonores intégrées */}
+                      <div className="audio-presets-pills">
+                        {AMBIENT_PRESETS.map((preset) => (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            className={`audio-preset-pill ${audioUrl === preset.id ? 'active' : ''}`}
+                            onClick={() => handleSelectPreset(preset)}
+                            title={preset.description}
+                          >
+                            <span>{preset.name}</span>
+                          </button>
+                        ))}
+
+                        {/* Import MP3 / Audio personnel */}
+                        <button
+                          type="button"
+                          className={`audio-preset-pill upload-audio-btn ${audioUrl && !audioUrl.startsWith('preset:') ? 'active' : ''}`}
+                          onClick={() => audioFileInputRef.current?.click()}
+                          title="Importer un fichier audio MP3 / WAV depuis l'appareil"
+                        >
+                          <Upload size={12} />
+                          <span>{audioUrl && !audioUrl.startsWith('preset:') ? 'Fichier importé' : 'Mon audio (MP3)'}</span>
+                        </button>
+                        <input
+                          ref={audioFileInputRef}
+                          type="file"
+                          accept="audio/*"
+                          style={{ display: 'none' }}
+                          onChange={handleAudioUpload}
+                        />
+                      </div>
+
+                      {/* Titre affiché de la piste */}
+                      <div className="audio-track-name-input-wrap">
+                        <input
+                          type="text"
+                          className="audio-track-input"
+                          placeholder="Nom de la piste (ex: Lofi Sunset, Ma voix, Artiste...)"
+                          value={audioTrack}
+                          onChange={(e) => setAudioTrack(e.target.value)}
+                        />
+                      </div>
                     </div>
                   )}
 

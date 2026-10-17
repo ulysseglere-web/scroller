@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { PostItem, UserProfile } from '../types';
 import { sound } from '../services/sound';
+import { ambientAudio } from '../services/ambientAudio';
 
 interface ReelsFeedProps {
   posts: PostItem[];
@@ -128,6 +129,32 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
       }
     });
   }, [currentIndex, reels.length]);
+
+  // Synchronize custom soundscape / audio file with current Reel
+  useEffect(() => {
+    const currentReel = reels[currentIndex];
+    if (currentReel?.audioUrl) {
+      ambientAudio.play(currentReel.audioUrl, isMuted);
+    } else {
+      ambientAudio.stop();
+    }
+
+    return () => {
+      ambientAudio.stop();
+    };
+  }, [currentIndex, reels]);
+
+  useEffect(() => {
+    ambientAudio.setMuted(isMuted);
+  }, [isMuted]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      ambientAudio.resume();
+    } else {
+      ambientAudio.pause();
+    }
+  }, [isPlaying]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const scrollTop = e.currentTarget.scrollTop;

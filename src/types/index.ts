@@ -29,6 +29,7 @@ export interface PostItem {
   mediaUrls?: string[];
   videoUrl?: string;
   audioTrack?: string;
+  audioUrl?: string;
   noteBody?: string;
   noteStyle?: NoteStyle;
   quoteData?: QuoteData;
