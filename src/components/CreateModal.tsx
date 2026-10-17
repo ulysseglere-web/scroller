@@ -11,11 +11,16 @@ import {
   Music,
   Play,
   Pause,
-  Upload
+  Upload,
+  Search,
+  Disc,
+  Mic,
+  Sparkles
 } from 'lucide-react';
 import type { PostItem, NoteStyle } from '../types';
 import { sound } from '../services/sound';
 import { AMBIENT_PRESETS, ambientAudio, type AudioPreset } from '../services/ambientAudio';
+import { searchMusic, TRENDING_TRACKS, type MusicTrack } from '../services/musicService';
 
 interface CreateModalProps {
   isOpen: boolean;
@@ -53,10 +58,22 @@ export const CreateModal: React.FC<CreateModalProps> = ({
   const [selectedMediaFiles, setSelectedMediaFiles] = useState<string[]>(initialFiles);
   const [videoUrl, setVideoUrl] = useState<string>('');
 
-  // Audio state for Reels / Videos
+  // Audio & Music state
   const [audioTrack, setAudioTrack] = useState<string>('');
+  const [audioArtist, setAudioArtist] = useState<string>('');
+  const [audioCover, setAudioCover] = useState<string>('');
   const [audioUrl, setAudioUrl] = useState<string>('');
+  const [spotifyUrl, setSpotifyUrl] = useState<string>('');
   const [isPreviewingAudio, setIsPreviewingAudio] = useState(false);
+  const [previewingTrackId, setPreviewingTrackId] = useState<string | null>(null);
+
+  // Music Picker Drawer State
+  const [isMusicDrawerOpen, setIsMusicDrawerOpen] = useState(false);
+  const [musicActiveTab, setMusicActiveTab] = useState<'search' | 'upload' | 'ambient'>('search');
+  const [musicSearchQuery, setMusicSearchQuery] = useState('');
+  const [musicSearchResults, setMusicSearchResults] = useState<MusicTrack[]>(TRENDING_TRACKS);
+  const [isSearchingMusic, setIsSearchingMusic] = useState(false);
+
   const audioFileInputRef = useRef<HTMLInputElement>(null);
 
   // Note state
@@ -110,15 +127,55 @@ export const CreateModal: React.FC<CreateModalProps> = ({
 
   const handleSelectPreset = (preset: AudioPreset) => {
     if (audioUrl === preset.id) {
-      setAudioUrl('');
-      setAudioTrack('');
-      stopAudio();
+      handleRemoveAudio();
     } else {
       setAudioUrl(preset.id);
       setAudioTrack(preset.name);
+      setAudioArtist('Ambiance procédurale');
+      setAudioCover('');
+      setSpotifyUrl('');
       sound.playTap();
       ambientAudio.play(preset.id, false);
       setIsPreviewingAudio(true);
+      setPreviewingTrackId(preset.id);
+    }
+  };
+
+  const handleSelectMusicTrack = (track: MusicTrack) => {
+    sound.playTap();
+    setAudioUrl(track.previewUrl);
+    setAudioTrack(track.title);
+    setAudioArtist(track.artist);
+    setAudioCover(track.coverUrl);
+    setSpotifyUrl(track.spotifyUrl);
+    stopAudio();
+    setIsMusicDrawerOpen(false);
+  };
+
+  const handlePreviewTrackInList = (track: MusicTrack) => {
+    if (previewingTrackId === track.id && isPreviewingAudio) {
+      stopAudio();
+      setPreviewingTrackId(null);
+    } else {
+      stopAudio();
+      setPreviewingTrackId(track.id);
+      ambientAudio.play(track.previewUrl, false);
+      setIsPreviewingAudio(true);
+    }
+  };
+
+  const handleSearchMusic = async (q: string) => {
+    setMusicSearchQuery(q);
+    if (!q.trim()) {
+      setMusicSearchResults(TRENDING_TRACKS);
+      return;
+    }
+    setIsSearchingMusic(true);
+    try {
+      const results = await searchMusic(q);
+      setMusicSearchResults(results);
+    } finally {
+      setIsSearchingMusic(false);
     }
   };
 
@@ -126,19 +183,35 @@ export const CreateModal: React.FC<CreateModalProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const fileNameClean = file.name.replace(/\.[^/.]+$/, '');
     const reader = new FileReader();
     reader.onload = (ev) => {
       if (ev.target?.result) {
         const dataUrl = ev.target.result as string;
         setAudioUrl(dataUrl);
-        setAudioTrack(file.name.replace(/\.[^/.]+$/, ''));
+        setAudioTrack(fileNameClean);
+        setAudioArtist('Piste personnelle');
+        setAudioCover('');
+        setSpotifyUrl('');
         sound.playPop();
         ambientAudio.play(dataUrl, false);
         setIsPreviewingAudio(true);
+        setPreviewingTrackId('custom_upload');
+        setIsMusicDrawerOpen(false);
       }
     };
     reader.readAsDataURL(file);
     if (audioFileInputRef.current) audioFileInputRef.current.value = '';
+  };
+
+  const handleRemoveAudio = () => {
+    stopAudio();
+    setAudioUrl('');
+    setAudioTrack('');
+    setAudioArtist('');
+    setAudioCover('');
+    setSpotifyUrl('');
+    setPreviewingTrackId(null);
   };
 
   const togglePreview = () => {
@@ -215,23 +288,27 @@ export const CreateModal: React.FC<CreateModalProps> = ({
 
   const handleSave = () => {
     if (mode === 'media') {
-      if (selectedMediaFiles.length === 0 && !videoUrl) {
-        alert('Veuillez ajouter au moins une photo ou une vidéo.');
+      if (selectedMediaFiles.length === 0 && !videoUrl && !audioUrl) {
+        alert('Veuillez ajouter au moins une photo, une vidéo ou un son.');
         return;
       }
 
       const isVideo = Boolean(videoUrl);
+      const isAudioReel = Boolean(audioUrl) && !isVideo;
       const isCarousel = selectedMediaFiles.length > 1;
 
       const newPost: PostItem = {
         id: `post_${Date.now()}`,
-        type: isVideo ? 'reel' : isCarousel ? 'carousel' : 'photo',
+        type: (isVideo || isAudioReel) ? 'reel' : isCarousel ? 'carousel' : 'photo',
         createdAt: new Date().toISOString(),
         caption: caption.trim(),
-        mediaUrls: isVideo ? undefined : selectedMediaFiles,
+        mediaUrls: isVideo ? undefined : (selectedMediaFiles.length > 0 ? selectedMediaFiles : (audioCover ? [audioCover] : undefined)),
         videoUrl: isVideo ? videoUrl : undefined,
-        audioTrack: isVideo ? (audioTrack.trim() || undefined) : undefined,
-        audioUrl: isVideo ? (audioUrl || undefined) : undefined,
+        audioTrack: audioTrack.trim() || undefined,
+        audioArtist: audioArtist.trim() || undefined,
+        audioCover: audioCover || undefined,
+        audioUrl: audioUrl || undefined,
+        spotifyUrl: spotifyUrl || undefined,
         tags: [],
         location: location.trim() || undefined,
         isFavorite,
@@ -263,11 +340,12 @@ export const CreateModal: React.FC<CreateModalProps> = ({
 
     stopLiveCamera();
     stopAudio();
+    setIsMusicDrawerOpen(false);
     onClose();
   };
 
   const canPublish = mode === 'media' 
-    ? (selectedMediaFiles.length > 0 || Boolean(videoUrl))
+    ? (selectedMediaFiles.length > 0 || Boolean(videoUrl) || Boolean(audioUrl))
     : noteBody.trim().length > 0;
 
   return (
@@ -360,7 +438,7 @@ export const CreateModal: React.FC<CreateModalProps> = ({
                         onClick={() => fileInputRef.current?.click()}
                       >
                         <ImageIcon size={16} />
-                        <span>Sélectionner sur l'appareil</span>
+                        <span>Sélectionner photos / vidéo</span>
                       </button>
 
                       <button
@@ -369,7 +447,20 @@ export const CreateModal: React.FC<CreateModalProps> = ({
                         onClick={startLiveCamera}
                       >
                         <Camera size={16} />
-                        <span>Prendre une photo</span>
+                        <span>Caméra</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn-select-audio-trigger"
+                        onClick={() => {
+                          sound.playTap();
+                          setMusicActiveTab('upload');
+                          setIsMusicDrawerOpen(true);
+                        }}
+                      >
+                        <Mic size={16} />
+                        <span>Mon son (WAV / MP3)</span>
                       </button>
                     </div>
                   </div>
@@ -385,9 +476,9 @@ export const CreateModal: React.FC<CreateModalProps> = ({
                         className="btn-remove-media" 
                         onClick={() => {
                           setVideoUrl('');
-                          setAudioUrl('');
-                          setAudioTrack('');
-                          stopAudio();
+                          if (!selectedMediaFiles.length) {
+                            handleRemoveAudio();
+                          }
                         }}
                         title="Supprimer la vidéo"
                       >
@@ -396,15 +487,25 @@ export const CreateModal: React.FC<CreateModalProps> = ({
                     </div>
                   )}
 
-                  {/* Panneau Audio & Bande-son pour Reel/Vidéo */}
-                  {videoUrl && (
-                    <div className="reel-audio-config-panel">
-                      <div className="audio-config-header">
-                        <div className="audio-header-title">
-                          <Music size={16} className="text-crimson" />
-                          <span>Bande-son du Reel</span>
+                  {/* Panneau Audio Universel (Vidéo OU Photos/Reel Audio) */}
+                  <div className="reel-audio-config-panel">
+                    {audioUrl ? (
+                      <div className="selected-audio-card">
+                        <div className="selected-audio-left" onClick={() => setIsMusicDrawerOpen(true)}>
+                          <div className="selected-audio-cover">
+                            {audioCover ? (
+                              <img src={audioCover} alt="Cover" />
+                            ) : (
+                              <Disc size={22} className="spinning-disc-icon" />
+                            )}
+                          </div>
+                          <div className="selected-audio-info">
+                            <span className="selected-audio-title">{audioTrack || 'Morceau sélectionné'}</span>
+                            <span className="selected-audio-artist">{audioArtist || 'Piste audio'}</span>
+                          </div>
                         </div>
-                        {audioUrl && (
+
+                        <div className="selected-audio-actions">
                           <button
                             type="button"
                             className={`btn-preview-audio ${isPreviewingAudio ? 'playing' : ''}`}
@@ -412,56 +513,48 @@ export const CreateModal: React.FC<CreateModalProps> = ({
                             title={isPreviewingAudio ? 'Arrêter la pré-écoute' : 'Écouter'}
                           >
                             {isPreviewingAudio ? <Pause size={13} /> : <Play size={13} fill="#ffffff" />}
-                            <span>{isPreviewingAudio ? 'Arrêter' : 'Écouter'}</span>
                           </button>
-                        )}
-                      </div>
 
-                      {/* Ambiances sonores intégrées */}
-                      <div className="audio-presets-pills">
-                        {AMBIENT_PRESETS.map((preset) => (
                           <button
-                            key={preset.id}
                             type="button"
-                            className={`audio-preset-pill ${audioUrl === preset.id ? 'active' : ''}`}
-                            onClick={() => handleSelectPreset(preset)}
-                            title={preset.description}
+                            className="btn-change-audio"
+                            onClick={() => {
+                              sound.playTap();
+                              setIsMusicDrawerOpen(true);
+                            }}
+                            title="Changer de musique"
                           >
-                            <span>{preset.name}</span>
+                            Changer
                           </button>
-                        ))}
 
-                        {/* Import MP3 / Audio personnel */}
-                        <button
-                          type="button"
-                          className={`audio-preset-pill upload-audio-btn ${audioUrl && !audioUrl.startsWith('preset:') ? 'active' : ''}`}
-                          onClick={() => audioFileInputRef.current?.click()}
-                          title="Importer un fichier audio MP3 / WAV depuis l'appareil"
-                        >
-                          <Upload size={12} />
-                          <span>{audioUrl && !audioUrl.startsWith('preset:') ? 'Fichier importé' : 'Mon audio (MP3)'}</span>
-                        </button>
-                        <input
-                          ref={audioFileInputRef}
-                          type="file"
-                          accept="audio/*"
-                          style={{ display: 'none' }}
-                          onChange={handleAudioUpload}
-                        />
+                          <button
+                            type="button"
+                            className="btn-remove-audio"
+                            onClick={handleRemoveAudio}
+                            title="Supprimer la bande-son"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
                       </div>
-
-                      {/* Titre affiché de la piste */}
-                      <div className="audio-track-name-input-wrap">
-                        <input
-                          type="text"
-                          className="audio-track-input"
-                          placeholder="Nom de la piste (ex: Lofi Sunset, Ma voix, Artiste...)"
-                          value={audioTrack}
-                          onChange={(e) => setAudioTrack(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  )}
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn-trigger-music-picker"
+                        onClick={() => {
+                          sound.playTap();
+                          setIsMusicDrawerOpen(true);
+                        }}
+                      >
+                        <Music size={16} className="text-crimson" />
+                        <div className="trigger-music-text">
+                          <span className="trigger-music-title">Ajouter une musique ou un son</span>
+                          <span className="trigger-music-sub">Recherche Spotify / Deezer ou vos fichiers WAV / MP3</span>
+                        </div>
+                        <Plus size={16} />
+                      </button>
+                    )}
+                  </div>
 
                   {/* Photos / Carrousel */}
                   {selectedMediaFiles.length > 0 && (
@@ -611,6 +704,217 @@ export const CreateModal: React.FC<CreateModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Drawer / Tiroir de Recherche Musicale et Import Audio */}
+      {isMusicDrawerOpen && (
+        <div className="modal-backdrop sub-drawer-backdrop" onClick={() => setIsMusicDrawerOpen(false)}>
+          <div className="music-picker-drawer-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-header">
+              <div className="music-drawer-title-row">
+                <Music size={18} className="text-crimson" />
+                <h3>Choisir un son</h3>
+              </div>
+              <button 
+                type="button" 
+                className="btn-close-modal" 
+                onClick={() => {
+                  stopAudio();
+                  setIsMusicDrawerOpen(false);
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Onglets sélecteur de son */}
+            <div className="music-drawer-tabs">
+              <button
+                type="button"
+                className={`music-tab-btn ${musicActiveTab === 'search' ? 'active' : ''}`}
+                onClick={() => {
+                  sound.playTap();
+                  setMusicActiveTab('search');
+                }}
+              >
+                <Search size={14} />
+                <span>Tendances & Recherche</span>
+              </button>
+
+              <button
+                type="button"
+                className={`music-tab-btn ${musicActiveTab === 'upload' ? 'active' : ''}`}
+                onClick={() => {
+                  sound.playTap();
+                  setMusicActiveTab('upload');
+                }}
+              >
+                <Mic size={14} />
+                <span>Studio Musicien (WAV/MP3)</span>
+              </button>
+
+              <button
+                type="button"
+                className={`music-tab-btn ${musicActiveTab === 'ambient' ? 'active' : ''}`}
+                onClick={() => {
+                  sound.playTap();
+                  setMusicActiveTab('ambient');
+                }}
+              >
+                <Sparkles size={14} />
+                <span>Ambiances Chill</span>
+              </button>
+            </div>
+
+            {/* ONGLET 1: RECHERCHE ITUNES / SPOTIFY */}
+            {musicActiveTab === 'search' && (
+              <div className="music-tab-content search-tab">
+                <div className="music-search-bar-wrap">
+                  <Search size={16} className="search-input-icon" />
+                  <input
+                    type="text"
+                    className="music-search-field"
+                    placeholder="Rechercher Daft Punk, The Weeknd, Drake, Jul..."
+                    value={musicSearchQuery}
+                    onChange={(e) => handleSearchMusic(e.target.value)}
+                    autoFocus
+                  />
+                  {musicSearchQuery && (
+                    <button
+                      type="button"
+                      className="btn-clear-music-search"
+                      onClick={() => handleSearchMusic('')}
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                <div className="music-results-scroll-list">
+                  {isSearchingMusic ? (
+                    <div className="music-loading-state">
+                      <div className="loading-spinner-circle" />
+                      <span>Recherche dans le catalogue mondial...</span>
+                    </div>
+                  ) : musicSearchResults.length === 0 ? (
+                    <div className="music-empty-results">
+                      <p>Aucun morceau trouvé pour "{musicSearchQuery}".</p>
+                      <span className="empty-sub">Essayez avec un nom d'artiste ou titre simplifié.</span>
+                    </div>
+                  ) : (
+                    musicSearchResults.map((track) => {
+                      const isThisPreviewing = previewingTrackId === track.id && isPreviewingAudio;
+                      return (
+                        <div key={track.id} className="music-track-row-item">
+                          <div className="track-cover-square" onClick={() => handlePreviewTrackInList(track)}>
+                            <img src={track.coverUrl} alt={track.title} />
+                            <div className={`track-cover-play-overlay ${isThisPreviewing ? 'active' : ''}`}>
+                              {isThisPreviewing ? <Pause size={16} fill="#ffffff" /> : <Play size={16} fill="#ffffff" />}
+                            </div>
+                          </div>
+
+                          <div className="track-info-col" onClick={() => handlePreviewTrackInList(track)}>
+                            <span className="track-name-bold">{track.title}</span>
+                            <span className="track-artist-sub">{track.artist}</span>
+                          </div>
+
+                          <div className="track-actions-col">
+                            <button
+                              type="button"
+                              className="btn-select-track"
+                              onClick={() => handleSelectMusicTrack(track)}
+                            >
+                              Choisir
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ONGLET 2: STUDIO MUSICIEN (IMPORT FICHIER AUDIO WAV/MP3) */}
+            {musicActiveTab === 'upload' && (
+              <div className="music-tab-content upload-tab">
+                <div className="musician-upload-banner">
+                  <div className="musician-icon-badge">
+                    <Disc size={28} />
+                  </div>
+                  <h4>Espace Créateur & Musicien</h4>
+                  <p>
+                    Importez votre propre composition, voix, démo ou production en haute qualité (WAV, MP3, AAC, FLAC).
+                  </p>
+
+                  <button
+                    type="button"
+                    className="btn-musician-upload-file"
+                    onClick={() => audioFileInputRef.current?.click()}
+                  >
+                    <Upload size={18} />
+                    <span>Sélectionner un fichier WAV ou MP3</span>
+                  </button>
+
+                  <input
+                    ref={audioFileInputRef}
+                    type="file"
+                    accept="audio/*,.wav,.mp3,.m4a,.aac,.flac,.ogg"
+                    style={{ display: 'none' }}
+                    onChange={handleAudioUpload}
+                  />
+                </div>
+
+                <div className="musician-tips-box">
+                  <h5>💡 Bon à savoir :</h5>
+                  <ul>
+                    <li>Si vous avez filmé une vidéo en train de chanter, laissez le son original du clip sans musique pour que votre voix résonne purement.</li>
+                    <li>Si vous n'avez qu'un fichier audio sans vidéo, vous pouvez ajouter une photo ou pochette : votre son deviendra un Reel avec vinyle tournant !</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* ONGLET 3: AMBIANCES WEB AUDIO PROCEDURALES */}
+            {musicActiveTab === 'ambient' && (
+              <div className="music-tab-content ambient-tab">
+                <p className="ambient-tab-desc">
+                  Générateurs sonores procéduraux 100% hors-ligne créés par synthèse en temps réel.
+                </p>
+                <div className="ambient-presets-grid">
+                  {AMBIENT_PRESETS.map((preset) => {
+                    const isSelected = audioUrl === preset.id;
+                    const isThisPreviewing = previewingTrackId === preset.id && isPreviewingAudio;
+                    return (
+                      <div 
+                        key={preset.id} 
+                        className={`ambient-preset-card ${isSelected ? 'active' : ''}`}
+                        onClick={() => handleSelectPreset(preset)}
+                      >
+                        <div className="ambient-card-left">
+                          <span className="preset-card-name">{preset.name}</span>
+                          <span className="preset-card-desc">{preset.description}</span>
+                        </div>
+                        <div className="ambient-card-right">
+                          <button
+                            type="button"
+                            className={`btn-ambient-play ${isThisPreviewing ? 'playing' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectPreset(preset);
+                            }}
+                          >
+                            {isThisPreviewing ? <Pause size={14} /> : <Play size={14} fill="#ffffff" />}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

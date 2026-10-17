@@ -29,7 +29,10 @@ export interface PostItem {
   mediaUrls?: string[];
   videoUrl?: string;
   audioTrack?: string;
+  audioArtist?: string;
+  audioCover?: string;
   audioUrl?: string;
+  spotifyUrl?: string;
   noteBody?: string;
   noteStyle?: NoteStyle;
   quoteData?: QuoteData;

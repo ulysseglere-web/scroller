@@ -291,7 +291,57 @@ export default {
       }
     }
 
-    // 5. Servir l'application Frontend SPA (HTML, JS, CSS, Media)
+    // 5. API: Recherche musicale universelle (extraits légaux 30s + pochettes HD + liens Spotify)
+    if (url.pathname === '/api/music/search' && request.method === 'GET') {
+      try {
+        const query = url.searchParams.get('q') || '';
+        if (!query.trim()) {
+          return jsonResponse({ results: [] });
+        }
+
+        const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query.trim())}&entity=song&limit=20`;
+        const resp = await fetch(itunesUrl, {
+          headers: {
+            'User-Agent': 'AntisocialApp/1.0',
+            'Accept': 'application/json',
+          },
+        });
+
+        if (!resp.ok) {
+          return jsonResponse({ results: [] });
+        }
+
+        const data = (await resp.json()) as {
+          results: Array<{
+            trackId: number;
+            trackName: string;
+            artistName: string;
+            collectionName?: string;
+            artworkUrl100?: string;
+            previewUrl?: string;
+            trackViewUrl?: string;
+          }>;
+        };
+
+        const results = (data.results || [])
+          .filter((item) => Boolean(item.previewUrl))
+          .map((item) => ({
+            id: String(item.trackId),
+            title: item.trackName,
+            artist: item.artistName,
+            album: item.collectionName || '',
+            coverUrl: item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '600x600bb') : '',
+            previewUrl: item.previewUrl,
+            spotifyUrl: `https://open.spotify.com/search/${encodeURIComponent(`${item.artistName} ${item.trackName}`)}`,
+          }));
+
+        return jsonResponse({ results });
+      } catch {
+        return jsonResponse({ results: [] });
+      }
+    }
+
+    // 6. Servir l'application Frontend SPA (HTML, JS, CSS, Media)
     return env.ASSETS.fetch(request);
   },
 };

@@ -12,7 +12,8 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  Send
+  Send,
+  ExternalLink
 } from 'lucide-react';
 import type { PostItem, UserProfile } from '../types';
 import { sound } from '../services/sound';
@@ -35,13 +36,14 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
   onEdit,
   onOpenCreate,
 }) => {
-  const reels = posts.filter((p) => (p.type === 'reel' || p.type === 'video') && !p.isArchived);
+  const reels = posts.filter((p) => (p.type === 'reel' || p.type === 'video' || (Boolean(p.audioUrl) && p.type !== 'note')) && !p.isArchived);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showHeartPop, setShowHeartPop] = useState(false);
   const [activeAnnotationPost, setActiveAnnotationPost] = useState<PostItem | null>(null);
   const [annotationText, setAnnotationText] = useState('');
+  const [musicDetailPost, setMusicDetailPost] = useState<PostItem | null>(null);
 
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -258,16 +260,45 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
               className="reel-item-slide"
               onClick={() => handleTapScreen(reel)}
             >
-              {/* Vertical 9:16 Video */}
-              <video
-                ref={(el) => { videoRefs.current[index] = el; }}
-                src={reel.videoUrl}
-                className="reel-video-element"
-                loop
-                playsInline
-                muted={isMuted}
-                poster={reel.mediaUrls?.[0]}
-              />
+              {/* Vertical Media (Video OR Visual Audio Reel) */}
+              {reel.videoUrl ? (
+                <video
+                  ref={(el) => { videoRefs.current[index] = el; }}
+                  src={reel.videoUrl}
+                  className="reel-video-element"
+                  loop
+                  playsInline
+                  muted={isMuted}
+                  poster={reel.mediaUrls?.[0]}
+                />
+              ) : (
+                <div className="reel-audio-visual-stage">
+                  <img 
+                    src={reel.mediaUrls?.[0] || reel.audioCover || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&auto=format&fit=crop&q=80'} 
+                    alt="Audio Reel Visual" 
+                    className="reel-audio-cover-backdrop"
+                  />
+                  <div className="audio-visual-ambient-blur" />
+                  <div className="audio-visual-center-art">
+                    <div className={`audio-vinyl-hero ${isPlaying && isSelected ? 'spinning' : ''}`}>
+                      <img 
+                        src={reel.audioCover || reel.mediaUrls?.[0] || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&auto=format&fit=crop&q=80'} 
+                        alt="Cover" 
+                        className="vinyl-center-sticker" 
+                      />
+                    </div>
+                    <div className="audio-hero-waveform">
+                      {Array.from({ length: 24 }).map((_, i) => (
+                        <span 
+                          key={i} 
+                          className={`wave-bar ${isPlaying && isSelected ? 'pulsing' : ''}`} 
+                          style={{ animationDelay: `${(i * 0.08) % 1.2}s` }} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Play/Pause Center Indicator */}
               {!isPlaying && isSelected && (
@@ -349,10 +380,18 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
                   <span className="reel-action-label">Partager</span>
                 </button>
 
-                {/* Spinning Audio Disc */}
-                <div className={`spinning-disc-wrap ${isPlaying && isSelected ? 'spinning' : ''}`}>
+                {/* Spinning Audio Disc with Cover or Music Icon */}
+                <div 
+                  className={`spinning-disc-wrap ${isPlaying && isSelected ? 'spinning' : ''}`}
+                  onClick={() => setMusicDetailPost(reel)}
+                  title="Voir les détails de la musique"
+                >
                   <div className="disc-inner">
-                    <Music size={12} color="#ffffff" />
+                    {reel.audioCover ? (
+                      <img src={reel.audioCover} alt="Pochette" className="disc-cover-art" />
+                    ) : (
+                      <Music size={12} color="#ffffff" />
+                    )}
                   </div>
                 </div>
               </div>
@@ -386,8 +425,12 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
                   </div>
                 )}
 
-                {/* Modern Soundwave Audio Ticker */}
-                <div className="reel-audio-ticker">
+                {/* Modern Soundwave Audio Ticker (Clickable to open Spotify/Details) */}
+                <div 
+                  className="reel-audio-ticker clickable-ticker"
+                  onClick={() => setMusicDetailPost(reel)}
+                  title="Ouvrir la fiche du morceau"
+                >
                   <div className="soundwave-anim-bars" title="Audio">
                     <span className={`sw-bar bar-1 ${isPlaying && isSelected ? 'active' : ''}`} />
                     <span className={`sw-bar bar-2 ${isPlaying && isSelected ? 'active' : ''}`} />
@@ -395,7 +438,7 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
                     <span className={`sw-bar bar-4 ${isPlaying && isSelected ? 'active' : ''}`} />
                   </div>
                   <div className="ticker-track-name">
-                    <span>{reel.audioTrack || 'Audio · ' + profile.displayName}</span>
+                    <span>{reel.audioTrack || (reel.audioArtist ? `${reel.audioArtist} - Son` : 'Audio · ' + profile.displayName)}</span>
                   </div>
                 </div>
               </div>
@@ -467,6 +510,63 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Music Track & Spotify Info Sheet */}
+      {musicDetailPost && (
+        <div className="modal-backdrop" onClick={() => setMusicDetailPost(null)}>
+          <div className="music-detail-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-header">
+              <h3>Bande-son du Reel</h3>
+              <button className="btn-close-modal" onClick={() => setMusicDetailPost(null)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="music-sheet-content">
+              <div className="music-sheet-cover-box">
+                {musicDetailPost.audioCover ? (
+                  <img src={musicDetailPost.audioCover} alt="Cover HD" className="music-sheet-cover-img" />
+                ) : (
+                  <div className="music-sheet-vinyl-placeholder">
+                    <Music size={44} color="#ff1e27" />
+                  </div>
+                )}
+              </div>
+
+              <div className="music-sheet-meta">
+                <h4 className="music-sheet-title">{musicDetailPost.audioTrack || 'Piste audio'}</h4>
+                <p className="music-sheet-artist">{musicDetailPost.audioArtist || profile.displayName}</p>
+                <div className="music-sheet-badge-row">
+                  {musicDetailPost.audioUrl?.startsWith('data:audio') ? (
+                    <span className="audio-nature-badge creator-sound">🎙️ Fichier audio du créateur (WAV / MP3)</span>
+                  ) : musicDetailPost.audioUrl?.startsWith('preset:') ? (
+                    <span className="audio-nature-badge ambient-sound">✨ Ambiance sonore Web Audio</span>
+                  ) : (
+                    <span className="audio-nature-badge official-sound">🎧 Extrait officiel haute fidélité (30s)</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Bouton Spotify officiel */}
+              <div className="music-sheet-spotify-action">
+                <a
+                  href={musicDetailPost.spotifyUrl || `https://open.spotify.com/search/${encodeURIComponent(musicDetailPost.audioTrack || '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-open-spotify"
+                  onClick={() => sound.playTap()}
+                >
+                  <svg className="spotify-icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                    <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                  </svg>
+                  <span>Écouter le morceau complet sur Spotify</span>
+                  <ExternalLink size={16} />
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       )}
