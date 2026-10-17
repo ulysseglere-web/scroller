@@ -8,8 +8,8 @@ import {
   KeyRound, 
   Camera, 
   Trash2,
-  Maximize2,
-  Play
+  Play,
+  Heart
 } from 'lucide-react';
 import type { UserProfile } from '../types';
 import { sound } from '../services/sound';
@@ -28,6 +28,10 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
   onImportBackup,
 }) => {
   const [mode, setMode] = useState<'register' | 'login'>(existingAccount ? 'login' : 'register');
+
+  // Interactive showcase state
+  const [activeShowcaseTab, setActiveShowcaseTab] = useState<'feed' | 'reel' | 'vault'>('feed');
+  const [showHeartAnim, setShowHeartAnim] = useState(false);
 
   // Register form state
   const [username, setUsername] = useState('');
@@ -196,90 +200,292 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
           </h1>
 
           <p className="clean-lead">
-            Un espace visuel dédié à vos photos, vos vidéos et vos pensées.
+            Un espace visuel dédié à vos clichés, vos séquences vidéo et vos pensées.
             La fluidité et l'immersion des formats modernes, libérées du bruit et du regard d'autrui.
           </p>
+
+          {/* INTERACTIVE FLAGSHIP DEVICE SHOWCASE */}
+          <div className="flagship-showcase-container">
+            {/* Ambient Red Glow */}
+            <div className="showcase-ambient-glow" />
+
+            {/* Selector tabs */}
+            <div className="showcase-device-tabs">
+              <button
+                type="button"
+                className={`device-tab-btn ${activeShowcaseTab === 'feed' ? 'active' : ''}`}
+                onClick={() => {
+                  sound.playTap();
+                  setActiveShowcaseTab('feed');
+                }}
+              >
+                <span>01 / CLICHÉ 4:5</span>
+              </button>
+              <button
+                type="button"
+                className={`device-tab-btn ${activeShowcaseTab === 'reel' ? 'active' : ''}`}
+                onClick={() => {
+                  sound.playTap();
+                  setActiveShowcaseTab('reel');
+                }}
+              >
+                <span>02 / SÉQUENCE 9:16</span>
+              </button>
+              <button
+                type="button"
+                className={`device-tab-btn ${activeShowcaseTab === 'vault' ? 'active' : ''}`}
+                onClick={() => {
+                  sound.playTap();
+                  setActiveShowcaseTab('vault');
+                }}
+              >
+                <span>03 / COFFRE PRIVÉ</span>
+              </button>
+            </div>
+
+            {/* Central Phone Mockup */}
+            <div className="flagship-phone-frame">
+              {/* Dynamic Island / Speaker */}
+              <div className="phone-island">
+                <span className="island-camera" />
+              </div>
+
+              {/* Status Bar */}
+              <div className="phone-status-bar">
+                <span className="status-clock">02:41</span>
+                <span className="status-badge">100% HORS-LIGNE</span>
+                <span className="status-battery">5G 100%</span>
+              </div>
+
+              {/* Screen Content based on activeShowcaseTab */}
+              <div className="phone-screen-content">
+                {activeShowcaseTab === 'feed' && (
+                  <div className="mock-feed-post">
+                    <div className="mock-post-header">
+                      <div className="mock-user-row">
+                        <div className="mock-avatar-pill">
+                          <img src="/logo.png" alt="Moi" />
+                        </div>
+                        <div className="mock-user-meta">
+                          <span className="mock-handle">@vous</span>
+                          <span className="mock-loc">Paris, 02:41 · 35mm</span>
+                        </div>
+                      </div>
+                      <span className="mock-privacy-tag">PRIVÉ</span>
+                    </div>
+
+                    <div 
+                      className="mock-image-container"
+                      onClick={() => {
+                        sound.playHeart();
+                        setShowHeartAnim(true);
+                        setTimeout(() => setShowHeartAnim(false), 900);
+                      }}
+                      title="Tapez pour aimer"
+                    >
+                      <img 
+                        src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1080&q=85" 
+                        alt="Cliché 4:5" 
+                        className="mock-photo-img"
+                      />
+                      <div className="mock-photo-vignette" />
+                      <div className="mock-photo-ratio-badge">4:5 · 1080×1350</div>
+                      
+                      {showHeartAnim && (
+                        <div className="mock-heart-explosion">
+                          <Heart size={54} fill="#ff1e27" color="#ff1e27" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mock-post-actions">
+                      <div className="actions-left">
+                        <button 
+                          type="button" 
+                          className="mock-action-btn loved"
+                          onClick={() => {
+                            sound.playHeart();
+                            setShowHeartAnim(true);
+                            setTimeout(() => setShowHeartAnim(false), 900);
+                          }}
+                        >
+                          <Heart size={16} fill="#ff1e27" color="#ff1e27" />
+                          <span>1</span>
+                        </button>
+                        <span className="mock-sub-info">Archives personnelles</span>
+                      </div>
+                      <span className="mock-hud-badge">ISO 400 · f/1.4</span>
+                    </div>
+                  </div>
+                )}
+
+                {activeShowcaseTab === 'reel' && (
+                  <div className="mock-reel-view">
+                    <img 
+                      src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1080&q=85" 
+                      alt="Séquence 9:16" 
+                      className="mock-reel-img"
+                    />
+                    <div className="mock-reel-gradient" />
+
+                    <div className="mock-reel-header">
+                      <span className="reel-tag">SÉQUENCE IMMERSIVE</span>
+                      <span className="reel-timecode">00:18 / 00:30</span>
+                    </div>
+
+                    <div className="mock-reel-center">
+                      <div className="mock-reel-play-btn">
+                        <Play size={22} fill="#ffffff" />
+                      </div>
+                    </div>
+
+                    <div className="mock-reel-footer">
+                      <div className="reel-track-row">
+                        <div className="reel-sound-wave">
+                          <span className="wave-bar w1" />
+                          <span className="wave-bar w2" />
+                          <span className="wave-bar w3" />
+                          <span className="wave-bar w4" />
+                        </div>
+                        <span className="reel-track-title">Audio local · 48kHz</span>
+                      </div>
+                      <p className="reel-caption">Capture nocturne sans compression.</p>
+                    </div>
+                  </div>
+                )}
+
+                {activeShowcaseTab === 'vault' && (
+                  <div className="mock-vault-view">
+                    <div className="mock-vault-header">
+                      <ShieldCheck size={18} color="#ff1e27" />
+                      <span>COFFRE-FORT INDEXEDDB</span>
+                    </div>
+
+                    <div className="mock-vault-grid">
+                      <div className="v-grid-cell">
+                        <img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=85" alt="Architecture" />
+                        <span className="cell-tag">#01</span>
+                      </div>
+                      <div className="v-grid-cell">
+                        <img src="https://images.unsplash.com/photo-1495707902641-75cac588d2e9?auto=format&fit=crop&w=600&q=85" alt="35mm Camera" />
+                        <span className="cell-tag">#02</span>
+                      </div>
+                      <div className="v-grid-cell">
+                        <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=600&q=85" alt="Tunnel noir" />
+                        <span className="cell-tag">#03</span>
+                      </div>
+                      <div className="v-grid-cell">
+                        <img src="https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=600&q=85" alt="Neon Red" />
+                        <span className="cell-tag">#04</span>
+                      </div>
+                    </div>
+
+                    <div className="mock-vault-footer">
+                      <span className="vault-stat">4 médias chiffrés</span>
+                      <span className="vault-zero">0 octet transmis en ligne</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Floating Glass Badges */}
+            <div className="floating-badge badge-left-top">
+              <span className="dot-red" />
+              <span>0 spectateur · 100% privé</span>
+            </div>
+
+            <div className="floating-badge badge-right-mid">
+              <span className="badge-icon">🔒</span>
+              <span>Stockage navigateur chiffré</span>
+            </div>
+
+            <div className="floating-badge badge-left-bot">
+              <span className="badge-icon">🖤</span>
+              <span>Vos likes restent les vôtres</span>
+            </div>
+          </div>
         </section>
 
-        {/* 2. FORMAT SHOWCASE — PURE ARCHITECTURAL WIREFRAMES (PAS D'EXEMPLE IA NI DE STOCK) */}
+        {/* 2. VISUAL SHOWCASE CARDS — HIGH-IMPACT AUTHENTIC IMAGERY */}
         <section className="clean-wireframe-grid">
-          {/* Wireframe 1: Ratio 4:5 */}
+          {/* Card 1: Ratio 4:5 Cliché */}
           <div className="clean-card">
-            <div className="card-top-tag">01 / FLUX</div>
-            <div className="wireframe-stage aspect-4-5">
-              <div className="wireframe-inner">
-                <div className="wf-header-line">
-                  <span className="wf-avatar-circle" />
-                  <span className="wf-text-bar short" />
-                </div>
-                <div className="wf-canvas-box">
-                  <span className="wf-ratio-label">4:5</span>
-                  <span className="wf-dimensions">1080 × 1350</span>
-                  <div className="wf-grid-crosshairs" />
-                </div>
-                <div className="wf-footer-line">
-                  <span className="wf-icon-dot" />
-                  <span className="wf-icon-dot" />
-                  <span className="wf-text-bar medium" />
-                </div>
+            <div className="card-top-tag">01 / IMMERSION</div>
+            <div className="visual-stage aspect-4-5">
+              <img 
+                src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1080&q=85" 
+                alt="Format 4:5" 
+                className="stage-bg-image"
+              />
+              <div className="stage-overlay-scrim" />
+              <div className="stage-top-meta">
+                <span className="meta-badge-dark">RATIO 4:5</span>
+                <span className="meta-badge-red">1080 × 1350</span>
+              </div>
+              <div className="stage-bot-meta">
+                <span className="bot-caption">Plein écran vertical · Zéro bordure noire</span>
               </div>
             </div>
             <div className="card-info">
               <h3>Format Portrait 4:5</h3>
-              <p>Vos clichés et carrousels prennent tout l'écran vertical sans bandes noires.</p>
+              <p>Chaque cliché occupe la hauteur optimale de l'écran. Contraste brut, grain argentique, sans compression dégradante.</p>
             </div>
           </div>
 
-          {/* Wireframe 2: Ratio 9:16 */}
+          {/* Card 2: Séquences Vidéo 9:16 */}
           <div className="clean-card">
             <div className="card-top-tag">02 / SÉQUENCES</div>
-            <div className="wireframe-stage aspect-9-16">
-              <div className="wireframe-inner">
-                <div className="wf-header-line">
-                  <span className="wf-ratio-label small">9:16</span>
-                  <Maximize2 size={13} className="wf-dim-icon" />
+            <div className="visual-stage aspect-9-16">
+              <img 
+                src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1080&q=85" 
+                alt="Séquences 9:16" 
+                className="stage-bg-image"
+              />
+              <div className="stage-overlay-scrim" />
+              <div className="stage-top-meta">
+                <span className="meta-badge-dark">9:16 VERTICAL</span>
+                <span className="meta-badge-red">4K / 60 FPS</span>
+              </div>
+              <div className="stage-center-play">
+                <div className="play-circle-glow">
+                  <Play size={20} fill="#ffffff" />
                 </div>
-                <div className="wf-canvas-box video-box">
-                  <div className="wf-play-badge">
-                    <Play size={18} fill="#ffffff" />
-                  </div>
-                  <div className="wf-audio-bars">
-                    <span className="bar" />
-                    <span className="bar" />
-                    <span className="bar" />
-                    <span className="bar" />
-                    <span className="wf-track-label">Audio local</span>
-                  </div>
-                </div>
-                <div className="wf-footer-line">
-                  <span className="wf-text-bar long" />
-                </div>
+              </div>
+              <div className="stage-bot-meta">
+                <span className="bot-caption">Défilement continu · Audio haute fidélité</span>
               </div>
             </div>
             <div className="card-info">
-              <h3>Séquences Vidéo 9:16</h3>
-              <p>Capture directe ou import avec lecture continue et navigation par défilement vertical.</p>
+              <h3>Séquences Vidéo Plein Écran</h3>
+              <p>Capturez ou importez vos séquences verticales. Fluidité totale, lecture continue et gestes natifs, sans algorithmes intrusifs.</p>
             </div>
           </div>
 
-          {/* Wireframe 3: Local Storage */}
+          {/* Card 3: Local Storage Sanctuary */}
           <div className="clean-card">
             <div className="card-top-tag">03 / SOUVERAINETÉ</div>
-            <div className="wireframe-stage aspect-vault">
-              <div className="wireframe-inner center-content">
-                <div className="wf-shield-wrap">
-                  <ShieldCheck size={36} className="wf-shield-icon" />
+            <div className="visual-stage aspect-vault">
+              <img 
+                src="https://images.unsplash.com/photo-1495707902641-75cac588d2e9?auto=format&fit=crop&w=1080&q=85" 
+                alt="Archives argentiques" 
+                className="stage-bg-image desaturated"
+              />
+              <div className="stage-overlay-scrim heavy" />
+              <div className="stage-center-shield">
+                <div className="shield-ring-glow">
+                  <ShieldCheck size={36} color="#ff1e27" />
                 </div>
-                <span className="wf-tech-title">STOCKAGE LOCAL</span>
-                <span className="wf-tech-sub">IndexedDB · Zéro serveur externe</span>
-                <div className="wf-status-meter">
-                  <span className="meter-fill" />
-                </div>
+                <span className="shield-label">STOCKAGE HORS-LIGNE</span>
+                <span className="shield-sub">Base locale IndexedDB</span>
+              </div>
+              <div className="stage-bot-meta">
+                <span className="bot-caption">Zéro tracking · Export JSON en 1 clic</span>
               </div>
             </div>
             <div className="card-info">
               <h3>Sanctuaire Privé</h3>
-              <p>Vos contenus ne quittent jamais votre navigateur. Aucune donnée n'est transmise.</p>
+              <p>Vos contenus ne quittent jamais votre terminal. Aucune donnée n'est hébergée sur des serveurs distants ou analysée.</p>
             </div>
           </div>
         </section>
