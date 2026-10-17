@@ -1,5 +1,4 @@
 import type { PostItem, UserProfile } from '../types';
-import { DEFAULT_PROFILE, STARTER_POSTS } from './starterData';
 
 const DB_NAME = 'scroller_db';
 const DB_VERSION = 1;
@@ -8,6 +7,7 @@ const STORE_SETTINGS = 'settings';
 
 const LOCAL_STORAGE_KEY_POSTS = 'scroller_posts_backup';
 const LOCAL_STORAGE_KEY_PROFILE = 'scroller_profile_backup';
+const SESSION_AUTH_KEY = 'scroller_auth_session';
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -32,15 +32,22 @@ function openDatabase(): Promise<IDBDatabase> {
   });
 }
 
-const SCHEMA_VERSION_KEY = 'scroller_schema_v2_minimalist';
+// Session authentication status
+export function isSessionAuthenticated(): boolean {
+  return localStorage.getItem(SESSION_AUTH_KEY) === 'true';
+}
 
+export function setSessionAuthenticated(authenticated: boolean): void {
+  if (authenticated) {
+    localStorage.setItem(SESSION_AUTH_KEY, 'true');
+  } else {
+    localStorage.removeItem(SESSION_AUTH_KEY);
+  }
+}
+
+// Retrieve stored posts without any fake demo seed
 export async function getStoredPosts(): Promise<PostItem[]> {
   try {
-    if (!localStorage.getItem(SCHEMA_VERSION_KEY)) {
-      await resetDatabaseToDemo();
-      localStorage.setItem(SCHEMA_VERSION_KEY, 'true');
-    }
-
     const db = await openDatabase();
     return new Promise((resolve) => {
       const tx = db.transaction(STORE_POSTS, 'readonly');
@@ -48,13 +55,9 @@ export async function getStoredPosts(): Promise<PostItem[]> {
       const req = store.getAll();
 
       req.onsuccess = () => {
-        let posts: PostItem[] = req.result || [];
-        if (posts.length === 0) {
-          initStarterPosts().then(resolve);
-        } else {
-          posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          resolve(posts);
-        }
+        const posts: PostItem[] = req.result || [];
+        posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        resolve(posts);
       };
 
       req.onerror = () => {
@@ -66,38 +69,19 @@ export async function getStoredPosts(): Promise<PostItem[]> {
   }
 }
 
-async function initStarterPosts(): Promise<PostItem[]> {
-  try {
-    const db = await openDatabase();
-    const tx = db.transaction(STORE_POSTS, 'readwrite');
-    const store = tx.objectStore(STORE_POSTS);
-    for (const post of STARTER_POSTS) {
-      store.put(post);
-    }
-    await new Promise<void>((res) => {
-      tx.oncomplete = () => res();
-    });
-  } catch {
-    // fallback
-    localStorage.setItem(LOCAL_STORAGE_KEY_POSTS, JSON.stringify(STARTER_POSTS));
-  }
-  return [...STARTER_POSTS];
-}
-
 function getFallbackPosts(): PostItem[] {
   const local = localStorage.getItem(LOCAL_STORAGE_KEY_POSTS);
   if (local) {
     try {
       const parsed = JSON.parse(local);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
     } catch {
       // ignore
     }
   }
-  localStorage.setItem(LOCAL_STORAGE_KEY_POSTS, JSON.stringify(STARTER_POSTS));
-  return [...STARTER_POSTS];
+  return [];
 }
 
 export async function savePost(post: PostItem): Promise<void> {
@@ -110,7 +94,6 @@ export async function savePost(post: PostItem): Promise<void> {
       tx.onerror = () => reject(tx.error);
     });
   } catch {
-    // Fallback LocalStorage
     const posts = getFallbackPosts();
     const index = posts.findIndex((p) => p.id === post.id);
     if (index >= 0) {
@@ -137,7 +120,8 @@ export async function deletePostFromDb(id: string): Promise<void> {
   }
 }
 
-export async function getStoredProfile(): Promise<UserProfile> {
+// User Profile & Account (null if no account created yet)
+export async function getStoredProfile(): Promise<UserProfile | null> {
   try {
     const db = await openDatabase();
     return new Promise((resolve) => {
@@ -159,7 +143,7 @@ export async function getStoredProfile(): Promise<UserProfile> {
   }
 }
 
-function getFallbackProfile(): UserProfile {
+function getFallbackProfile(): UserProfile | null {
   const local = localStorage.getItem(LOCAL_STORAGE_KEY_PROFILE);
   if (local) {
     try {
@@ -168,7 +152,7 @@ function getFallbackProfile(): UserProfile {
       // ignore
     }
   }
-  return { ...DEFAULT_PROFILE };
+  return null;
 }
 
 export async function saveProfileToDb(profile: UserProfile): Promise<void> {
@@ -189,7 +173,7 @@ export async function exportAllData(): Promise<string> {
   const posts = await getStoredPosts();
   const profile = await getStoredProfile();
   const payload = {
-    version: 1,
+    version: 2,
     appName: 'SCROLLER',
     exportedAt: new Date().toISOString(),
     profile,
@@ -221,6 +205,7 @@ export async function importData(jsonContent: string): Promise<boolean> {
       tx.oncomplete = () => res();
       tx.onerror = () => rej(tx.error);
     });
+    setSessionAuthenticated(true);
     return true;
   } catch (err) {
     console.error('Erreur import:', err);
@@ -228,20 +213,21 @@ export async function importData(jsonContent: string): Promise<boolean> {
   }
 }
 
-export async function resetDatabaseToDemo(): Promise<void> {
+// Complete data reset (Remise à zéro)
+export async function clearAllUserData(): Promise<void> {
   try {
     const db = await openDatabase();
     const tx = db.transaction([STORE_POSTS, STORE_SETTINGS], 'readwrite');
     tx.objectStore(STORE_POSTS).clear();
-    for (const post of STARTER_POSTS) {
-      tx.objectStore(STORE_POSTS).put(post);
-    }
-    tx.objectStore(STORE_SETTINGS).put({ key: 'user_profile', value: DEFAULT_PROFILE });
+    tx.objectStore(STORE_SETTINGS).clear();
     await new Promise<void>((res) => {
       tx.oncomplete = () => res();
     });
   } catch {
-    localStorage.setItem(LOCAL_STORAGE_KEY_POSTS, JSON.stringify(STARTER_POSTS));
-    localStorage.setItem(LOCAL_STORAGE_KEY_PROFILE, JSON.stringify(DEFAULT_PROFILE));
+    // fallback
   }
+  localStorage.removeItem(LOCAL_STORAGE_KEY_POSTS);
+  localStorage.removeItem(LOCAL_STORAGE_KEY_PROFILE);
+  localStorage.removeItem(SESSION_AUTH_KEY);
+  localStorage.removeItem('scroller_schema_v2_minimalist');
 }

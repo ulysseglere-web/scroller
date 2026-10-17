@@ -9,9 +9,10 @@ import {
   saveProfileToDb, 
   exportAllData, 
   importData, 
-  resetDatabaseToDemo 
+  clearAllUserData,
+  isSessionAuthenticated,
+  setSessionAuthenticated
 } from './services/storage';
-import { DEFAULT_PROFILE } from './services/starterData';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
 import { HighlightsBar } from './components/HighlightsBar';
@@ -25,12 +26,29 @@ import { ArchiveScreen } from './components/ArchiveScreen';
 import { ProfileScreen } from './components/ProfileScreen';
 import { EditPostModal } from './components/EditPostModal';
 import { CommandPalette } from './components/CommandPalette';
+import { AuthSoulScreen } from './components/AuthSoulScreen';
 import { sound } from './services/sound';
 import { Sparkles, Plus } from 'lucide-react';
 
+const CLEAN_V3_KEY = 'scroller_v3_clean_slate';
+
+const DEFAULT_EMPTY_PROFILE: UserProfile = {
+  username: 'moi',
+  displayName: 'Moi',
+  bio: 'Sanctuaire personnel.',
+  avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+  theme: 'dark',
+  joinedAt: new Date().toISOString(),
+  highlights: [],
+};
+
 export const App: React.FC = () => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [existingAccount, setExistingAccount] = useState<UserProfile | null>(null);
+
   const [posts, setPosts] = useState<PostItem[]>([]);
-  const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
+  const [profile, setProfile] = useState<UserProfile>(DEFAULT_EMPTY_PROFILE);
   const [activeTab, setActiveTab] = useState<NavTab>('home');
   const [feedFilter, setFeedFilter] = useState<FeedFilter>('all');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -55,15 +73,31 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Initial load
+  // Initial load: ensure fake demo data is cleared once so user creates/connects real account
   useEffect(() => {
     async function loadData() {
+      if (!localStorage.getItem(CLEAN_V3_KEY)) {
+        await clearAllUserData();
+        localStorage.setItem(CLEAN_V3_KEY, 'true');
+      }
+
+      const storedProfile = await getStoredProfile();
+      setExistingAccount(storedProfile);
+
+      const authed = isSessionAuthenticated() && storedProfile !== null;
+      setIsAuthenticated(authed);
+
+      if (storedProfile) {
+        setProfile(storedProfile);
+        setTheme(storedProfile.theme || 'dark');
+        document.documentElement.setAttribute('data-theme', storedProfile.theme || 'dark');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+
       const storedPosts = await getStoredPosts();
       setPosts(storedPosts);
-      const storedProfile = await getStoredProfile();
-      setProfile(storedProfile);
-      setTheme(storedProfile.theme || 'dark');
-      document.documentElement.setAttribute('data-theme', storedProfile.theme || 'dark');
+      setIsLoaded(true);
     }
     loadData();
   }, []);
@@ -72,6 +106,39 @@ export const App: React.FC = () => {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // Auth Handlers
+  const handleRegister = async (newProfile: UserProfile) => {
+    sound.playPop();
+    await saveProfileToDb(newProfile);
+    setProfile(newProfile);
+    setExistingAccount(newProfile);
+    setSessionAuthenticated(true);
+    setIsAuthenticated(true);
+    setPosts([]);
+  };
+
+  const handleLogin = (userProfile: UserProfile) => {
+    sound.playChime();
+    setProfile(userProfile);
+    setSessionAuthenticated(true);
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    sound.playTap();
+    setSessionAuthenticated(false);
+    setIsAuthenticated(false);
+  };
+
+  const handleClearAllData = async () => {
+    sound.playTap();
+    await clearAllUserData();
+    setPosts([]);
+    setProfile(DEFAULT_EMPTY_PROFILE);
+    setExistingAccount(null);
+    setIsAuthenticated(false);
+  };
 
   // Handlers for posts
   const handleToggleFavorite = async (id: string) => {
@@ -153,6 +220,7 @@ export const App: React.FC = () => {
   const handleUpdateProfile = async (updated: UserProfile) => {
     sound.playTap();
     setProfile(updated);
+    setExistingAccount(updated);
     await saveProfileToDb(updated);
   };
 
@@ -176,22 +244,16 @@ export const App: React.FC = () => {
       const refreshedPosts = await getStoredPosts();
       const refreshedProfile = await getStoredProfile();
       setPosts(refreshedPosts);
-      setProfile(refreshedProfile);
-      setTheme(refreshedProfile.theme);
+      if (refreshedProfile) {
+        setProfile(refreshedProfile);
+        setExistingAccount(refreshedProfile);
+        setTheme(refreshedProfile.theme);
+        setIsAuthenticated(true);
+      }
       alert('Sauvegarde restaurée avec succès !');
     } else {
       alert('Impossible de restaurer ce fichier. Format non reconnu.');
     }
-  };
-
-  const handleResetDemo = async () => {
-    sound.playTap();
-    await resetDatabaseToDemo();
-    const refreshedPosts = await getStoredPosts();
-    const refreshedProfile = await getStoredProfile();
-    setPosts(refreshedPosts);
-    setProfile(refreshedProfile);
-    alert('Base réinitialisée avec les exemples de départ.');
   };
 
   // Random Memory Resurfacing
@@ -233,6 +295,28 @@ export const App: React.FC = () => {
 
   const archivedCount = useMemo(() => posts.filter((p) => p.isArchived).length, [posts]);
   const hasFavorites = useMemo(() => posts.some((p) => p.isFavorite && !p.isArchived), [posts]);
+
+  // Loading state
+  if (!isLoaded) {
+    return (
+      <div className="auth-loading-screen">
+        <img src="/logo.png" alt="SCROLLER" className="loading-logo" />
+        <span className="loading-wordmark">SCROLLER</span>
+      </div>
+    );
+  }
+
+  // Not authenticated: Show Landing / Soul / Auth Page
+  if (!isAuthenticated) {
+    return (
+      <AuthSoulScreen
+        existingAccount={existingAccount}
+        onLogin={handleLogin}
+        onRegister={handleRegister}
+        onImportBackup={handleImportBackup}
+      />
+    );
+  }
 
   return (
     <div className="app-layout">
@@ -278,18 +362,20 @@ export const App: React.FC = () => {
             {/* Posts Feed */}
             {feedPosts.length === 0 ? (
               <div className="feed-empty-container">
-                <div className="empty-feed-icon">🍃</div>
-                <h3>Votre fil est prêt</h3>
+                <div className="empty-feed-badge">
+                  <Sparkles size={28} className="text-crimson" />
+                </div>
+                <h3>Votre sanctuaire est prêt, @{profile.username}</h3>
                 <p>
                   {feedFilter !== 'all'
-                    ? 'Aucun contenu ne correspond à ce filtre.'
-                    : 'Capturez votre première pensée, une citation inspirante ou une belle photo.'}
+                    ? 'Aucun souvenir ne correspond à ce filtre.'
+                    : 'Cet espace est vierge et 100% privé. Capturez votre premier souvenir, une réflexion ou une vidéo sans aucun regard extérieur.'}
                 </p>
                 <button
                   className="btn-create-first"
                   onClick={() => setIsCreateOpen(true)}
                 >
-                  <Plus size={18} /> <span>Ajouter un souvenir</span>
+                  <Plus size={18} /> <span>Capturer mon premier souvenir</span>
                 </button>
               </div>
             ) : (
@@ -357,76 +443,83 @@ export const App: React.FC = () => {
             onUpdateProfile={handleUpdateProfile}
             onExportBackup={handleExportBackup}
             onImportBackup={handleImportBackup}
-            onResetDemo={handleResetDemo}
+            onClearAllData={handleClearAllData}
+            onLogout={handleLogout}
             onOpenStory={(hl) => setSelectedHighlight(hl)}
             onOpenMediaViewer={(urls, idx) => setViewerMedia({ urls, initialIndex: idx })}
           />
         )}
       </main>
 
-      {/* Story Viewer Modal */}
-      <StoryViewerModal
-        isOpen={!!selectedHighlight}
-        highlight={selectedHighlight}
-        profile={profile}
-        onClose={() => setSelectedHighlight(null)}
-      />
-
-      {/* Create Modal */}
-      <CreateModal
-        isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
-        onSavePost={handleSaveNewPost}
-      />
+      {/* Create / Capture Modal */}
+      {isCreateOpen && (
+        <CreateModal
+          isOpen={isCreateOpen}
+          onClose={() => setIsCreateOpen(false)}
+          onSavePost={handleSaveNewPost}
+        />
+      )}
 
       {/* Edit Post Modal */}
-      <EditPostModal
-        post={editingPost}
-        isOpen={!!editingPost}
-        onClose={() => setEditingPost(null)}
-        onSave={handleSaveEditedPost}
-      />
+      {editingPost && (
+        <EditPostModal
+          isOpen={Boolean(editingPost)}
+          post={editingPost}
+          onClose={() => setEditingPost(null)}
+          onSave={handleSaveEditedPost}
+        />
+      )}
 
-      {/* Fullscreen Lightbox / Media Viewer */}
+      {/* Fullscreen Media Viewer */}
       {viewerMedia && (
         <MediaViewerModal
-          isOpen={!!viewerMedia}
+          isOpen={Boolean(viewerMedia)}
           mediaUrls={viewerMedia.urls}
           initialIndex={viewerMedia.initialIndex}
           onClose={() => setViewerMedia(null)}
         />
       )}
 
+      {/* Story Viewer Modal */}
+      {selectedHighlight && (
+        <StoryViewerModal
+          isOpen={Boolean(selectedHighlight)}
+          highlight={selectedHighlight}
+          profile={profile}
+          onClose={() => setSelectedHighlight(null)}
+        />
+      )}
+
       {/* Random Flashback Modal */}
       {randomMemory && (
         <div className="modal-backdrop" onClick={() => setRandomMemory(null)}>
-          <div className="create-modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="create-modal-header">
-              <div className="author-name-line">
-                <Sparkles size={18} style={{ color: '#ff1e27' }} />
-                <h3 className="create-modal-title">Souvenir resurgi</h3>
-              </div>
-              <button className="btn-close-modal" onClick={() => setRandomMemory(null)}>
-                ✕
-              </button>
+          <div className="flashback-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="flashback-header">
+              <Sparkles size={20} className="flashback-icon" />
+              <span>Souvenir réapparu</span>
             </div>
-            <div style={{ maxHeight: '80vh', overflowY: 'auto' }}>
-              <PostCard
-                post={randomMemory}
-                profile={profile}
-                onToggleFavorite={handleToggleFavorite}
-                onTogglePin={handleTogglePin}
-                onArchive={handleArchivePost}
-                onDelete={handleDeletePost}
-                onEdit={(p) => setEditingPost(p)}
-                onOpenMediaViewer={(urls, idx) => setViewerMedia({ urls, initialIndex: idx })}
-              />
-            </div>
+            <PostCard
+              post={randomMemory}
+              profile={profile}
+              onToggleFavorite={handleToggleFavorite}
+              onTogglePin={handleTogglePin}
+              onArchive={handleArchivePost}
+              onDelete={handleDeletePost}
+              onEdit={(p) => setEditingPost(p)}
+              onOpenMediaViewer={(urls, idx) => setViewerMedia({ urls, initialIndex: idx })}
+              onTagClick={() => {
+                setRandomMemory(null);
+                setActiveTab('search');
+              }}
+            />
+            <button className="flashback-close-btn" onClick={() => setRandomMemory(null)}>
+              Refermer ce souvenir
+            </button>
           </div>
         </div>
       )}
 
-      {/* Modern Command Palette (Cmd+K) */}
+      {/* Command Palette (⌘K) */}
       <CommandPalette
         isOpen={isCmdOpen}
         onClose={() => setIsCmdOpen(false)}
@@ -437,8 +530,8 @@ export const App: React.FC = () => {
         }}
         onSelectFilter={setFeedFilter}
         onOpenCreate={() => setIsCreateOpen(true)}
-        onOpenRandomMemory={handleOpenRandomMemory}
         onToggleTheme={handleToggleTheme}
+        onOpenRandomMemory={handleOpenRandomMemory}
         theme={theme}
         onExport={handleExportBackup}
       />

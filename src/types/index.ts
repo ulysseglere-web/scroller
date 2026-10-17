@@ -64,6 +64,7 @@ export interface UserProfile {
   theme: 'dark' | 'light';
   joinedAt: string;
   highlights?: StoryHighlight[];
+  password?: string;
 }
 
 export type NavTab = 'home' | 'search' | 'reels' | 'create' | 'archive' | 'profile';

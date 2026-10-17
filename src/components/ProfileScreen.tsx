@@ -5,16 +5,17 @@ import {
   Moon, 
   Sun, 
   ShieldCheck, 
-  RotateCcw, 
   Edit3, 
-  Check,
-  Grid,
-  Film,
-  Bookmark,
+  Check, 
+  Grid, 
+  Film, 
+  Bookmark, 
   BookOpen,
-  Plus,
-  Play,
-  Heart
+  Plus, 
+  Play, 
+  Heart,
+  Lock,
+  Trash2
 } from 'lucide-react';
 import type { PostItem, UserProfile, StoryHighlight } from '../types';
 
@@ -26,7 +27,8 @@ interface ProfileScreenProps {
   onUpdateProfile: (updated: UserProfile) => void;
   onExportBackup: () => void;
   onImportBackup: (jsonContent: string) => void;
-  onResetDemo: () => void;
+  onClearAllData: () => void;
+  onLogout: () => void;
   onOpenStory: (highlight: StoryHighlight) => void;
   onOpenMediaViewer: (mediaUrls: string[], initialIndex: number) => void;
 }
@@ -41,7 +43,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onUpdateProfile,
   onExportBackup,
   onImportBackup,
-  onResetDemo,
+  onClearAllData,
+  onLogout,
   onOpenStory,
   onOpenMediaViewer,
 }) => {
@@ -525,19 +528,30 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </label>
         </div>
 
-        <div className="setting-row" onClick={() => {
-          if (confirm('Recharger le jeu complet de démonstration (feed, reels, stories à la une) ?')) {
-            onResetDemo();
+        <div className="setting-row" onClick={onLogout}>
+          <div className="setting-info">
+            <Lock size={20} className="text-secondary" />
+            <div>
+              <div className="setting-name">Verrouiller mon sanctuaire</div>
+              <div className="setting-desc">Se déconnecter et retourner à la page d'accès</div>
+            </div>
+          </div>
+          <button className="setting-action-btn">Verrouiller</button>
+        </div>
+
+        <div className="setting-row danger-row" onClick={() => {
+          if (confirm('Êtes-vous sûr de vouloir effacer TOUTES vos données (posts, reels, profil) ? Cette action est irréversible.')) {
+            onClearAllData();
           }
         }}>
           <div className="setting-info">
-            <RotateCcw size={20} />
+            <Trash2 size={20} className="text-crimson" />
             <div>
-              <div className="setting-name">Réinitialiser les démos</div>
-              <div className="setting-desc">Recharger les exemples initiaux avec Reels et Stories</div>
+              <div className="setting-name text-crimson">Remise à zéro complète</div>
+              <div className="setting-desc">Supprimer toutes les archives locales de ce navigateur</div>
             </div>
           </div>
-          <button className="setting-action-btn">Réinitialiser</button>
+          <button className="setting-action-btn btn-danger">Effacer tout</button>
         </div>
       </div>
     </div>
