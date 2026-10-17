@@ -1,6 +1,5 @@
-import React, { useState, useId, useEffect } from 'react';
+import React, { useState, useId } from 'react';
 import { 
-  ShieldCheck, 
   Lock, 
   User, 
   ArrowRight, 
@@ -8,15 +7,12 @@ import {
   KeyRound, 
   Camera, 
   Trash2,
-  Play,
-  Pause,
   Heart,
-  Volume2,
-  VolumeX,
-  Zap,
-  HardDrive,
-  EyeOff,
-  Smartphone
+  Bookmark,
+  Share2,
+  Compass,
+  PlusSquare,
+  Home
 } from 'lucide-react';
 import type { UserProfile } from '../types';
 import { sound } from '../services/sound';
@@ -36,60 +32,15 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
 }) => {
   const [mode, setMode] = useState<'register' | 'login'>(existingAccount ? 'login' : 'register');
 
-  // Interactive showcase state
-  const [activeShowcaseTab, setActiveShowcaseTab] = useState<'feed' | 'reel' | 'vault'>('feed');
-  const [showHeartAnim, setShowHeartAnim] = useState(false);
-  const [isFeedLiked, setIsFeedLiked] = useState(true);
-  const [feedLikes, setFeedLikes] = useState(1);
-  const [isReelPlaying, setIsReelPlaying] = useState(false);
-  const [reelProgress, setReelProgress] = useState(38);
-  const [isSoundMuted, setIsSoundMuted] = useState(!sound.getEnabled());
-
-  // Animate reel scrubber when playing
-  useEffect(() => {
-    if (!isReelPlaying) return;
-    const interval = setInterval(() => {
-      setReelProgress((prev) => (prev >= 100 ? 0 : prev + 2.5));
-    }, 180);
-    return () => clearInterval(interval);
-  }, [isReelPlaying]);
-
-  const handleToggleSound = () => {
-    const active = sound.toggle();
-    setIsSoundMuted(!active);
-  };
-
-  const handleLikeMockPost = () => {
-    if (!isFeedLiked) {
-      sound.playHeart();
-      setShowHeartAnim(true);
-      setIsFeedLiked(true);
-      setFeedLikes(1);
-      setTimeout(() => setShowHeartAnim(false), 900);
-    } else {
-      sound.playTap();
-      setIsFeedLiked(false);
-      setFeedLikes(0);
-    }
-  };
-
-  const handleDoubleTapPost = () => {
-    sound.playHeart();
-    setShowHeartAnim(true);
-    setIsFeedLiked(true);
-    setFeedLikes(1);
-    setTimeout(() => setShowHeartAnim(false), 900);
-  };
-
-  const handleToggleReel = () => {
-    sound.playTap();
-    setIsReelPlaying(!isReelPlaying);
-  };
+  // Interactive phone preview state
+  const [isLikedInPhone, setIsLikedInPhone] = useState(true);
+  const [phoneLikes, setPhoneLikes] = useState(1);
+  const [showHeartBurst, setShowHeartBurst] = useState(false);
 
   // Register form state
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [bio, setBio] = useState('Archives personnelles sans public.');
+  const bio = 'Archives personnelles sans public.';
   const [customAvatar, setCustomAvatar] = useState<string>('');
   const [registerPassword, setRegisterPassword] = useState('');
 
@@ -103,6 +54,28 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
   const getMonogram = () => {
     const source = displayName.trim() || username.trim() || 'S';
     return source.charAt(0).toUpperCase();
+  };
+
+  const handlePhoneLike = () => {
+    if (!isLikedInPhone) {
+      sound.playHeart();
+      setShowHeartBurst(true);
+      setIsLikedInPhone(true);
+      setPhoneLikes(1);
+      setTimeout(() => setShowHeartBurst(false), 800);
+    } else {
+      sound.playTap();
+      setIsLikedInPhone(false);
+      setPhoneLikes(0);
+    }
+  };
+
+  const handlePhoneDoubleTap = () => {
+    sound.playHeart();
+    setShowHeartBurst(true);
+    setIsLikedInPhone(true);
+    setPhoneLikes(1);
+    setTimeout(() => setShowHeartBurst(false), 800);
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,33 +173,22 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
   };
 
   return (
-    <div className="landing-clean-wrapper">
-      {/* Top Navbar */}
-      <header className="clean-navbar">
-        <div className="clean-nav-brand">
-          <img src="/logo.png" alt="SCROLLER" className="clean-brand-logo" />
-          <span className="clean-brand-title">SCROLLER</span>
-          <span className="clean-status-pill">ESPACE PRIVÉ</span>
+    <div className="classe-page-wrapper">
+      {/* 1. Header Minimaliste & Prestigieux */}
+      <header className="classe-navbar">
+        <div className="classe-brand">
+          <img src="/logo.png" alt="SCROLLER" className="classe-logo-img" />
+          <span className="classe-brand-name">SCROLLER</span>
         </div>
 
-        <div className="clean-nav-actions">
-          <button 
-            type="button" 
-            className={`clean-sound-toggle-btn ${!isSoundMuted ? 'active' : ''}`}
-            onClick={handleToggleSound}
-            title={isSoundMuted ? 'Activer le son tactile' : 'Désactiver le son'}
-          >
-            {isSoundMuted ? <VolumeX size={13} /> : <Volume2 size={13} className="sound-active-icon" />}
-            <span>{isSoundMuted ? 'SON MUET' : 'SON ACTIF'}</span>
-          </button>
-
+        <div className="classe-nav-meta">
           {existingAccount ? (
             <button 
-              className="clean-nav-cta"
+              className="classe-nav-btn"
               onClick={() => {
                 sound.playTap();
                 setMode('login');
-                document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' });
+                document.getElementById('portal-section')?.scrollIntoView({ behavior: 'smooth' });
               }}
             >
               <span>Accéder à mon espace (@{existingAccount.username})</span>
@@ -234,11 +196,11 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
             </button>
           ) : (
             <button 
-              className="clean-nav-cta"
+              className="classe-nav-btn"
               onClick={() => {
                 sound.playTap();
                 setMode('register');
-                document.getElementById('auth-section')?.scrollIntoView({ behavior: 'smooth' });
+                document.getElementById('portal-section')?.scrollIntoView({ behavior: 'smooth' });
               }}
             >
               <span>Commencer</span>
@@ -248,473 +210,100 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="clean-main-container">
-        {/* 1. HERO HEADLINE */}
-        <section className="clean-hero">
-          <div className="clean-kicker">
-            <span className="kicker-dot" />
-            <span>ESPACE PERSONNEL FERMÉ</span>
-          </div>
-
-          <h1 className="clean-headline">
-            THE SOCIAL MEDIA
-            <span className="clean-headline-highlight">WHERE YOU'RE ALONE.</span>
-          </h1>
-
-          <p className="clean-lead">
-            Un espace visuel dédié à vos clichés, vos séquences vidéo et vos pensées.
-            La fluidité et l'immersion des formats modernes, libérées du bruit et du regard d'autrui.
-          </p>
-
-          {/* INTERACTIVE FLAGSHIP DEVICE SHOWCASE */}
-          <div className="flagship-showcase-container">
-            {/* Ambient Red Glow */}
-            <div className="showcase-ambient-glow" />
-
-            {/* Selector tabs */}
-            <div className="showcase-device-tabs">
-              <button
-                type="button"
-                className={`device-tab-btn ${activeShowcaseTab === 'feed' ? 'active' : ''}`}
-                onClick={() => {
-                  sound.playTap();
-                  setActiveShowcaseTab('feed');
-                }}
-              >
-                <span>01 / CLICHÉ 4:5</span>
-              </button>
-              <button
-                type="button"
-                className={`device-tab-btn ${activeShowcaseTab === 'reel' ? 'active' : ''}`}
-                onClick={() => {
-                  sound.playTap();
-                  setActiveShowcaseTab('reel');
-                }}
-              >
-                <span>02 / SÉQUENCE 9:16</span>
-              </button>
-              <button
-                type="button"
-                className={`device-tab-btn ${activeShowcaseTab === 'vault' ? 'active' : ''}`}
-                onClick={() => {
-                  sound.playTap();
-                  setActiveShowcaseTab('vault');
-                }}
-              >
-                <span>03 / COFFRE PRIVÉ</span>
-              </button>
+      {/* 2. Hero & Showcase iPhone (Deux colonnes d'élégance) */}
+      <main className="classe-main-content">
+        <section className="classe-split-hero">
+          {/* Colonne Gauche : Présentation claire & Accès */}
+          <div className="classe-col-intro" id="portal-section">
+            <div className="classe-eyebrow">
+              <span className="classe-dot" />
+              <span>ESPACE PERSONNEL PRIVÉ</span>
             </div>
 
-            {/* Central Phone Mockup */}
-            <div className="flagship-phone-frame">
-              {/* Outer Glow Tracer */}
-              <div className="phone-beam-trace" />
+            <h1 className="classe-headline">
+              THE SOCIAL MEDIA
+              <span className="classe-headline-accent">WHERE YOU'RE ALONE.</span>
+            </h1>
 
-              {/* Dynamic Island / Speaker */}
-              <div className="phone-island">
-                <span className="island-camera" />
+            <p className="classe-manifesto">
+              SCROLLER réinvente l'élégance des plateformes visuelles pour un usage strictement intime.
+              Vos clichés, vos carrousels et vos séquences vidéo s'expriment en plein cadre, sans compression dégradante.
+              Aucun algorithme, aucune publicité, aucun regard extérieur.
+            </p>
+
+            {/* Carte d'accès / Inscription épurée */}
+            <div className="classe-portal-card">
+              <div className="classe-portal-tabs">
+                <button
+                  type="button"
+                  className={`portal-tab ${mode === 'register' ? 'active' : ''}`}
+                  onClick={() => {
+                    sound.playTap();
+                    setMode('register');
+                    setLoginError('');
+                  }}
+                >
+                  <span>Créer mon espace</span>
+                </button>
+                <button
+                  type="button"
+                  className={`portal-tab ${mode === 'login' ? 'active' : ''}`}
+                  onClick={() => {
+                    sound.playTap();
+                    setMode('login');
+                    setLoginError('');
+                  }}
+                >
+                  <span>Connexion</span>
+                </button>
               </div>
 
-              {/* Status Bar */}
-              <div className="phone-status-bar">
-                <span className="status-clock">02:41</span>
-                <span className="status-badge">100% HORS-LIGNE</span>
-                <span className="status-battery">5G 100%</span>
-              </div>
-
-              {/* Screen Content based on activeShowcaseTab */}
-              <div className="phone-screen-content">
-                {activeShowcaseTab === 'feed' && (
-                  <div className="mock-feed-post">
-                    <div className="mock-post-header">
-                      <div className="mock-user-row">
-                        <div className="mock-avatar-pill">
-                          <img src="/logo.png" alt="Moi" />
+              {mode === 'register' ? (
+                <form className="classe-form" onSubmit={handleRegisterSubmit}>
+                  {/* Photo de profil personnalisée */}
+                  <div className="classe-avatar-picker">
+                    <div className="avatar-disc">
+                      {customAvatar ? (
+                        <div className="custom-photo-wrap">
+                          <img src={customAvatar} alt="Votre photo" />
+                          <button
+                            type="button"
+                            className="btn-trash-avatar"
+                            onClick={handleRemovePhoto}
+                            title="Supprimer"
+                          >
+                            <Trash2 size={12} />
+                          </button>
                         </div>
-                        <div className="mock-user-meta">
-                          <span className="mock-handle">@vous</span>
-                          <span className="mock-loc">Paris, 02:41 · 35mm</span>
-                        </div>
-                      </div>
-                      <span className="mock-privacy-tag">PRIVÉ</span>
-                    </div>
-
-                    <div 
-                      className="mock-image-container"
-                      onClick={handleDoubleTapPost}
-                      title="Double-cliquez pour aimer"
-                    >
-                      <img 
-                        src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1080&q=85" 
-                        alt="Cliché 4:5" 
-                        className="mock-photo-img"
-                      />
-                      <div className="mock-photo-vignette" />
-                      <div className="mock-photo-ratio-badge">4:5 · 1080×1350</div>
-                      
-                      {showHeartAnim && (
-                        <div className="mock-heart-explosion">
-                          <Heart size={54} fill="#ff1e27" color="#ff1e27" />
+                      ) : (
+                        <div className="monogram-disc">
+                          <span>{getMonogram()}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="mock-post-actions">
-                      <div className="actions-left">
-                        <button 
-                          type="button" 
-                          className={`mock-action-btn ${isFeedLiked ? 'loved' : ''}`}
-                          onClick={handleLikeMockPost}
-                          title="Aimer"
-                        >
-                          <Heart size={16} fill={isFeedLiked ? "#ff1e27" : "none"} color={isFeedLiked ? "#ff1e27" : "#ffffff"} />
-                          <span>{feedLikes}</span>
-                        </button>
-                        <span className="mock-sub-info">Archives personnelles</span>
-                      </div>
-                      <span className="mock-hud-badge">ISO 400 · f/1.4</span>
+                    <div className="avatar-meta-info">
+                      <span className="avatar-title">Photo personnelle</span>
+                      <span className="avatar-sub">Importez votre cliché ou conservez votre initiale.</span>
+                      <label htmlFor={fileInputId} className="btn-choose-file">
+                        <Camera size={13} />
+                        <span>{customAvatar ? 'Changer de photo' : 'Importer une photo'}</span>
+                        <input 
+                          id={fileInputId} 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handlePhotoUpload} 
+                          hidden 
+                        />
+                      </label>
                     </div>
                   </div>
-                )}
 
-                {activeShowcaseTab === 'reel' && (
-                  <div className="mock-reel-view">
-                    <img 
-                      src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1080&q=85" 
-                      alt="Séquence 9:16" 
-                      className="mock-reel-img"
-                    />
-                    <div className="mock-reel-gradient" />
-
-                    <div className="mock-reel-header">
-                      <span className="reel-tag">SÉQUENCE IMMERSIVE</span>
-                      <span className="reel-timecode">00:{Math.floor(reelProgress * 0.3).toString().padStart(2, '0')} / 00:30</span>
-                    </div>
-
-                    <div className="mock-reel-center">
-                      <button 
-                        type="button" 
-                        className="mock-reel-play-btn"
-                        onClick={handleToggleReel}
-                        title={isReelPlaying ? 'Pause' : 'Lecture'}
-                      >
-                        {isReelPlaying ? (
-                          <Pause size={22} fill="#ffffff" color="#ffffff" />
-                        ) : (
-                          <Play size={22} fill="#ffffff" color="#ffffff" />
-                        )}
-                      </button>
-                    </div>
-
-                    <div className="mock-reel-footer">
-                      {/* Scrubber Bar */}
-                      <div className="reel-scrubber-track">
-                        <div className="reel-scrubber-fill" style={{ width: `${reelProgress}%` }} />
-                      </div>
-
-                      <div className="reel-track-row">
-                        <div className="reel-sound-wave">
-                          <span className={`wave-bar w1 ${isReelPlaying ? 'animated' : ''}`} />
-                          <span className={`wave-bar w2 ${isReelPlaying ? 'animated' : ''}`} />
-                          <span className={`wave-bar w3 ${isReelPlaying ? 'animated' : ''}`} />
-                          <span className={`wave-bar w4 ${isReelPlaying ? 'animated' : ''}`} />
-                        </div>
-                        <span className="reel-track-title">Audio local · 48kHz</span>
-                      </div>
-                      <p className="reel-caption">Capture nocturne sans compression.</p>
-                    </div>
-                  </div>
-                )}
-
-                {activeShowcaseTab === 'vault' && (
-                  <div className="mock-vault-view">
-                    <div className="mock-vault-header">
-                      <ShieldCheck size={18} color="#ff1e27" />
-                      <span>COFFRE-FORT INDEXEDDB</span>
-                    </div>
-
-                    <div className="mock-vault-grid">
-                      <div className="v-grid-cell" title="Architecture · 14.2 MB">
-                        <img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=85" alt="Architecture" />
-                        <span className="cell-tag">#01</span>
-                      </div>
-                      <div className="v-grid-cell" title="Boîtier 35mm · 22.8 MB">
-                        <img src="https://images.unsplash.com/photo-1495707902641-75cac588d2e9?auto=format&fit=crop&w=600&q=85" alt="35mm Camera" />
-                        <span className="cell-tag">#02</span>
-                      </div>
-                      <div className="v-grid-cell" title="Tunnel noir · 19.1 MB">
-                        <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=600&q=85" alt="Tunnel noir" />
-                        <span className="cell-tag">#03</span>
-                      </div>
-                      <div className="v-grid-cell" title="Néon Red · 16.4 MB">
-                        <img src="https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=600&q=85" alt="Neon Red" />
-                        <span className="cell-tag">#04</span>
-                      </div>
-                    </div>
-
-                    <div className="mock-vault-footer">
-                      <span className="vault-stat">4 médias chiffrés en local</span>
-                      <span className="vault-zero">0 octet transmis en ligne</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Floating Glass Badges */}
-            <div className="floating-badge badge-left-top">
-              <span className="dot-red" />
-              <span>0 spectateur · 100% privé</span>
-            </div>
-
-            <div className="floating-badge badge-right-mid">
-              <span className="badge-icon">🔒</span>
-              <span>Stockage navigateur chiffré</span>
-            </div>
-
-            <div className="floating-badge badge-left-bot">
-              <span className="badge-icon">🖤</span>
-              <span>Vos likes restent les vôtres</span>
-            </div>
-          </div>
-        </section>
-
-        {/* 2. VISUAL SHOWCASE CARDS — HIGH-IMPACT AUTHENTIC IMAGERY */}
-        <section className="clean-wireframe-grid">
-          {/* Card 1: Ratio 4:5 Cliché */}
-          <div className="clean-card">
-            <div className="card-top-tag">01 / IMMERSION</div>
-            <div className="visual-stage aspect-4-5">
-              <img 
-                src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1080&q=85" 
-                alt="Format 4:5" 
-                className="stage-bg-image"
-              />
-              <div className="stage-overlay-scrim" />
-              <div className="stage-top-meta">
-                <span className="meta-badge-dark">RATIO 4:5</span>
-                <span className="meta-badge-red">1080 × 1350</span>
-              </div>
-              <div className="stage-bot-meta">
-                <span className="bot-caption">Plein écran vertical · Zéro bordure noire</span>
-              </div>
-            </div>
-            <div className="card-info">
-              <h3>Format Portrait 4:5</h3>
-              <p>Chaque cliché occupe la hauteur optimale de l'écran. Contraste brut, grain argentique, sans compression dégradante.</p>
-            </div>
-          </div>
-
-          {/* Card 2: Séquences Vidéo 9:16 */}
-          <div className="clean-card">
-            <div className="card-top-tag">02 / SÉQUENCES</div>
-            <div className="visual-stage aspect-9-16">
-              <img 
-                src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1080&q=85" 
-                alt="Séquences 9:16" 
-                className="stage-bg-image"
-              />
-              <div className="stage-overlay-scrim" />
-              <div className="stage-top-meta">
-                <span className="meta-badge-dark">9:16 VERTICAL</span>
-                <span className="meta-badge-red">4K / 60 FPS</span>
-              </div>
-              <div className="stage-center-play">
-                <div className="play-circle-glow">
-                  <Play size={20} fill="#ffffff" />
-                </div>
-              </div>
-              <div className="stage-bot-meta">
-                <span className="bot-caption">Défilement continu · Audio haute fidélité</span>
-              </div>
-            </div>
-            <div className="card-info">
-              <h3>Séquences Vidéo Plein Écran</h3>
-              <p>Capturez ou importez vos séquences verticales. Fluidité totale, lecture continue et gestes natifs, sans algorithmes intrusifs.</p>
-            </div>
-          </div>
-
-          {/* Card 3: Local Storage Sanctuary */}
-          <div className="clean-card">
-            <div className="card-top-tag">03 / SOUVERAINETÉ</div>
-            <div className="visual-stage aspect-vault">
-              <img 
-                src="https://images.unsplash.com/photo-1495707902641-75cac588d2e9?auto=format&fit=crop&w=1080&q=85" 
-                alt="Archives argentiques" 
-                className="stage-bg-image desaturated"
-              />
-              <div className="stage-overlay-scrim heavy" />
-              <div className="stage-center-shield">
-                <div className="shield-ring-glow">
-                  <ShieldCheck size={36} color="#ff1e27" />
-                </div>
-                <span className="shield-label">STOCKAGE HORS-LIGNE</span>
-                <span className="shield-sub">Base locale IndexedDB</span>
-              </div>
-              <div className="stage-bot-meta">
-                <span className="bot-caption">Zéro tracking · Export JSON en 1 clic</span>
-              </div>
-            </div>
-            <div className="card-info">
-              <h3>Sanctuaire Privé</h3>
-              <p>Vos contenus ne quittent jamais votre terminal. Aucune donnée n'est hébergée sur des serveurs distants ou analysée.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* 3. SOVEREIGN TELEMETRY BENTO GRID */}
-        <section className="clean-telemetry-console">
-          <div className="telemetry-header">
-            <span className="telemetry-tag">SPÉCIFICATIONS SOUVERAINES</span>
-            <h2>Conçu pour l'œil, bâti pour l'indépendance.</h2>
-          </div>
-          <div className="telemetry-grid">
-            <div className="telemetry-cell">
-              <div className="telemetry-top">
-                <Zap size={20} className="cell-ico" />
-                <span className="cell-val">60 FPS · 0ms</span>
-              </div>
-              <h4>Zéro latence réseau</h4>
-              <p>Rendu immédiat depuis la mémoire flash locale. Aucun temps de chargement, aucun tampon serveur.</p>
-            </div>
-            <div className="telemetry-cell">
-              <div className="telemetry-top">
-                <HardDrive size={20} className="cell-ico" />
-                <span className="cell-val">IndexedDB 64-bit</span>
-              </div>
-              <h4>Sanctuaire chiffré</h4>
-              <p>Toutes vos photos et vidéos restent exclusivement confinées dans le navigateur de votre appareil.</p>
-            </div>
-            <div className="telemetry-cell">
-              <div className="telemetry-top">
-                <EyeOff size={20} className="cell-ico" />
-                <span className="cell-val">0% Traçage</span>
-              </div>
-              <h4>Silencieux & Épuré</h4>
-              <p>Zéro publicité ciblée, zéro suggestion sponsorisée, zéro analyse comportementale.</p>
-            </div>
-            <div className="telemetry-cell">
-              <div className="telemetry-top">
-                <Smartphone size={20} className="cell-ico" />
-                <span className="cell-val">4:5 & 9:16 Natif</span>
-              </div>
-              <h4>Plein cadre immersif</h4>
-              <p>Calibré au millimètre pour les écrans modernes OLED et Retina sans bandes noires.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* 4. MANIFESTE ÉPURÉ EN 3 POINTS */}
-        <section className="clean-principles">
-          <div className="principle-item">
-            <span className="principle-num">01</span>
-            <h4>Zéro audience</h4>
-            <p>
-              Aucun abonné, aucun compteur de vues, aucun algorithme de recommandation. 
-              Vous n'avez rien à prouver.
-            </p>
-          </div>
-
-          <div className="principle-item">
-            <span className="principle-num">02</span>
-            <h4>Format sans compromis</h4>
-            <p>
-              Toute l'ergonomie visuelle que vous appréciez sur vos écrans, au service de vos souvenirs réels.
-            </p>
-          </div>
-
-          <div className="principle-item">
-            <span className="principle-num">03</span>
-            <h4>Données indépendantes</h4>
-            <p>
-              Votre espace fonctionne hors-ligne. Vous pouvez exporter l'intégralité de votre mémoire en un clic.
-            </p>
-          </div>
-        </section>
-
-        {/* 4. FORMULAIRE D'ACCÈS / CRÉATION (SANS CHOIX D'AVATARS PRÉ-FAITS) */}
-        <section className="clean-auth-section" id="auth-section">
-          <div className="clean-auth-card">
-            {/* Mode Switcher */}
-            <div className="clean-tabs-row">
-              <button
-                type="button"
-                className={`clean-tab ${mode === 'register' ? 'active' : ''}`}
-                onClick={() => {
-                  sound.playTap();
-                  setMode('register');
-                  setLoginError('');
-                }}
-              >
-                <span>Créer un espace</span>
-              </button>
-              <button
-                type="button"
-                className={`clean-tab ${mode === 'login' ? 'active' : ''}`}
-                onClick={() => {
-                  sound.playTap();
-                  setMode('login');
-                  setLoginError('');
-                }}
-              >
-                <span>Se connecter</span>
-              </button>
-            </div>
-
-            {/* Inscription */}
-            {mode === 'register' ? (
-              <form className="clean-form" onSubmit={handleRegisterSubmit}>
-                {/* Uploader de photo personnelle ou initiale (AUCUN avatar pré-fait) */}
-                <div className="photo-drop-zone">
-                  <div className="avatar-preview-slot">
-                    {customAvatar ? (
-                      <div className="custom-photo-circle">
-                        <img src={customAvatar} alt="Votre photo" />
-                        <button
-                          type="button"
-                          className="btn-trash-photo"
-                          onClick={handleRemovePhoto}
-                          title="Supprimer la photo"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="initial-monogram-circle">
-                        <span>{getMonogram()}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="avatar-text-slot">
-                    <span className="avatar-label">Photo de profil personnelle</span>
-                    <span className="avatar-hint">
-                      {customAvatar 
-                        ? 'Votre cliché personnel est prêt.' 
-                        : 'Importez votre photo ou conservez votre initiale typographique.'}
-                    </span>
-
-                    <label htmlFor={fileInputId} className="btn-upload-file">
-                      <Camera size={14} />
-                      <span>{customAvatar ? 'Modifier la photo' : 'Choisir une photo'}</span>
-                      <input 
-                        id={fileInputId} 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handlePhotoUpload} 
-                        hidden 
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                {/* Form fields */}
-                <div className="fields-row">
-                  <div className="field-block">
+                  {/* Champs de formulaire */}
+                  <div className="classe-input-group">
                     <label htmlFor="reg-pseudo">Pseudo</label>
-                    <div className="clean-input-box">
-                      <span className="at-prefix">@</span>
+                    <div className="classe-field-box">
+                      <span className="prefix">@</span>
                       <input
                         id="reg-pseudo"
                         type="text"
@@ -727,10 +316,10 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
                     </div>
                   </div>
 
-                  <div className="field-block">
+                  <div className="classe-input-group">
                     <label htmlFor="reg-name">Nom complet ou prénom</label>
-                    <div className="clean-input-box">
-                      <User size={15} className="box-icon" />
+                    <div className="classe-field-box">
+                      <User size={15} className="field-icon" />
                       <input
                         id="reg-name"
                         type="text"
@@ -740,134 +329,258 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
                       />
                     </div>
                   </div>
-                </div>
 
-                <div className="field-block">
-                  <label htmlFor="reg-bio">Devise ou description personnelle</label>
-                  <textarea
-                    id="reg-bio"
-                    rows={2}
-                    placeholder="Archives personnelles..."
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                  />
-                </div>
-
-                <div className="field-block">
-                  <label htmlFor="reg-pass">Code d'accès / mot de passe (optionnel)</label>
-                  <div className="clean-input-box">
-                    <KeyRound size={15} className="box-icon" />
-                    <input
-                      id="reg-pass"
-                      type="password"
-                      placeholder="Laissez vide ou tapez un code"
-                      value={registerPassword}
-                      onChange={(e) => setRegisterPassword(e.target.value)}
-                      autoComplete="new-password"
-                    />
-                  </div>
-                </div>
-
-                <button type="submit" className="clean-submit-btn">
-                  <span>ENTRER DANS MON ESPACE</span>
-                  <ArrowRight size={17} />
-                </button>
-              </form>
-            ) : (
-              /* Connexion */
-              <form className="clean-form" onSubmit={handleLoginSubmit}>
-                {existingAccount ? (
-                  <div className="existing-profile-chip">
-                    <div className="chip-avatar">
-                      <img src={existingAccount.avatarUrl} alt={existingAccount.displayName} />
-                    </div>
-                    <div className="chip-info">
-                      <span className="chip-name">{existingAccount.displayName}</span>
-                      <span className="chip-user">@{existingAccount.username}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="empty-account-box">
-                    <p>Aucun compte n'a encore été créé sur ce navigateur.</p>
-                    <button 
-                      type="button" 
-                      className="btn-link-tab"
-                      onClick={() => setMode('register')}
-                    >
-                      Créer un espace maintenant →
-                    </button>
-                  </div>
-                )}
-
-                <div className="field-block">
-                  <label htmlFor="log-pseudo">Pseudo</label>
-                  <div className="clean-input-box">
-                    <span className="at-prefix">@</span>
-                    <input
-                      id="log-pseudo"
-                      type="text"
-                      placeholder="votre_pseudo"
-                      value={loginUsername}
-                      onChange={(e) => setLoginUsername(e.target.value)}
-                      autoComplete="username"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {existingAccount?.password && (
-                  <div className="field-block">
-                    <label htmlFor="log-pass">Code d'accès</label>
-                    <div className="clean-input-box">
-                      <Lock size={15} className="box-icon" />
+                  <div className="classe-input-group">
+                    <label htmlFor="reg-pass">Code d'accès secret (optionnel)</label>
+                    <div className="classe-field-box">
+                      <KeyRound size={15} className="field-icon" />
                       <input
-                        id="log-pass"
+                        id="reg-pass"
                         type="password"
-                        placeholder="Tapez votre code"
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                        autoComplete="current-password"
+                        placeholder="Laissez vide ou tapez un code"
+                        value={registerPassword}
+                        onChange={(e) => setRegisterPassword(e.target.value)}
+                        autoComplete="new-password"
+                      />
+                    </div>
+                  </div>
+
+                  <button type="submit" className="btn-classe-submit">
+                    <span>ENTRER DANS MON ESPACE</span>
+                    <ArrowRight size={16} />
+                  </button>
+                </form>
+              ) : (
+                <form className="classe-form" onSubmit={handleLoginSubmit}>
+                  {existingAccount ? (
+                    <div className="classe-account-pill">
+                      <img src={existingAccount.avatarUrl} alt={existingAccount.displayName} className="pill-img" />
+                      <div className="pill-texts">
+                        <span className="pill-name">{existingAccount.displayName}</span>
+                        <span className="pill-handle">@{existingAccount.username}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="classe-empty-login">
+                      <p>Aucun compte détecté sur ce navigateur.</p>
+                      <button 
+                        type="button" 
+                        className="btn-switch-tab"
+                        onClick={() => setMode('register')}
+                      >
+                        Créer mon espace maintenant →
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="classe-input-group">
+                    <label htmlFor="log-pseudo">Pseudo</label>
+                    <div className="classe-field-box">
+                      <span className="prefix">@</span>
+                      <input
+                        id="log-pseudo"
+                        type="text"
+                        placeholder="votre_pseudo"
+                        value={loginUsername}
+                        onChange={(e) => setLoginUsername(e.target.value)}
+                        autoComplete="username"
                         required
                       />
                     </div>
                   </div>
-                )}
 
-                {loginError && (
-                  <div className="clean-error-strip">
-                    <span>{loginError}</span>
-                  </div>
-                )}
+                  {existingAccount?.password && (
+                    <div className="classe-input-group">
+                      <label htmlFor="log-pass">Code d'accès</label>
+                      <div className="classe-field-box">
+                        <Lock size={15} className="field-icon" />
+                        <input
+                          id="log-pass"
+                          type="password"
+                          placeholder="Code secret"
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          autoComplete="current-password"
+                          required
+                        />
+                      </div>
+                    </div>
+                  )}
 
-                <button type="submit" className="clean-submit-btn">
-                  <span>DÉVERROUILLER MON ESPACE</span>
-                  <ArrowRight size={17} />
-                </button>
-              </form>
-            )}
+                  {loginError && (
+                    <div className="classe-error-notice">
+                      <span>{loginError}</span>
+                    </div>
+                  )}
 
-            {/* Backup Link */}
-            <div className="clean-footer-row">
-              <label className="btn-restore-link">
-                <Upload size={13} />
-                <span>Restaurer une sauvegarde JSON</span>
-                <input type="file" accept=".json" onChange={handleImportFile} hidden />
-              </label>
+                  <button type="submit" className="btn-classe-submit">
+                    <span>DÉVERROUILLER</span>
+                    <ArrowRight size={16} />
+                  </button>
+                </form>
+              )}
+
+              <div className="classe-portal-footer">
+                <label className="btn-restore-json">
+                  <Upload size={13} />
+                  <span>Restaurer une sauvegarde JSON</span>
+                  <input type="file" accept=".json" onChange={handleImportFile} hidden />
+                </label>
+              </div>
             </div>
+          </div>
+
+          {/* Colonne Droite : L'Appli Réelle sur iPhone Authentique */}
+          <div className="classe-col-iphone">
+            <div className="iphone-ambient-halo" />
+
+            <div className="iphone-device">
+              {/* Châssis Titanium & Boutons */}
+              <div className="iphone-button volume-up" />
+              <div className="iphone-button volume-down" />
+              <div className="iphone-button power" />
+
+              {/* Cadre écran & bordure fine */}
+              <div className="iphone-screen">
+                {/* Dynamic Island */}
+                <div className="iphone-dynamic-island">
+                  <span className="island-lens" />
+                </div>
+
+                {/* Status Bar iOS */}
+                <div className="iphone-status-bar">
+                  <span className="ios-time">02:41</span>
+                  <div className="ios-icons">
+                    <span className="ios-signal">••••</span>
+                    <span className="ios-wifi">5G</span>
+                    <div className="ios-battery"><span className="ios-charge" /></div>
+                  </div>
+                </div>
+
+                {/* Interface Scroller dans l'iPhone */}
+                <div className="iphone-app-ui">
+                  {/* Top Bar de l'application */}
+                  <div className="app-top-bar">
+                    <div className="app-brand-lockup">
+                      <img src="/logo.png" alt="SCROLLER" className="app-logo-mini" />
+                      <span className="app-title-text">SCROLLER</span>
+                    </div>
+                    <span className="app-vault-badge">LOCAL</span>
+                  </div>
+
+                  {/* Post 4:5 Cliché dans le flux */}
+                  <div className="app-feed-scroll">
+                    <div className="app-post-card">
+                      {/* Header du post */}
+                      <div className="app-post-header">
+                        <div className="post-author-row">
+                          <div className="post-author-avatar">
+                            <img src="/logo.png" alt="Avatar" />
+                          </div>
+                          <div className="post-author-texts">
+                            <span className="post-author-name">@vous</span>
+                            <span className="post-author-location">Paris, 02:41 · 35mm</span>
+                          </div>
+                        </div>
+                        <span className="post-status-dot" title="Privé" />
+                      </div>
+
+                      {/* Photo Plein Cadre 4:5 */}
+                      <div 
+                        className="app-post-media"
+                        onDoubleClick={handlePhoneDoubleTap}
+                        title="Double-cliquez pour aimer"
+                      >
+                        <img 
+                          src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1080&q=85" 
+                          alt="Cliché Scroller" 
+                          className="app-post-img"
+                        />
+                        <div className="app-post-scrim" />
+                        
+                        {showHeartBurst && (
+                          <div className="post-heart-burst">
+                            <Heart size={64} fill="#ff1e27" color="#ff1e27" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions du post */}
+                      <div className="app-post-actions">
+                        <div className="actions-left">
+                          <button 
+                            type="button" 
+                            className={`post-action-btn ${isLikedInPhone ? 'liked' : ''}`}
+                            onClick={handlePhoneLike}
+                          >
+                            <Heart size={18} fill={isLikedInPhone ? "#ff1e27" : "none"} color={isLikedInPhone ? "#ff1e27" : "#ffffff"} />
+                            <span>{phoneLikes}</span>
+                          </button>
+                          <span className="post-privacy-label">Archives personnelles</span>
+                        </div>
+                        <div className="actions-right">
+                          <Bookmark size={16} className="btn-icon-subtle" />
+                          <Share2 size={16} className="btn-icon-subtle" />
+                        </div>
+                      </div>
+
+                      {/* Légende épurée */}
+                      <div className="app-post-caption">
+                        <span className="caption-bold">@vous</span>
+                        <span className="caption-body">Silence nocturne sur les quais. Tout est stocké ici, nulle part ailleurs.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Barre de navigation basse iOS */}
+                  <div className="app-bottom-dock">
+                    <Home size={19} className="dock-icon active" />
+                    <Compass size={19} className="dock-icon" />
+                    <PlusSquare size={19} className="dock-icon red-accent" />
+                    <div className="dock-profile-avatar">
+                      <span className="dock-monogram">V</span>
+                    </div>
+                  </div>
+
+                  {/* iOS Home Indicator Bar */}
+                  <div className="ios-home-bar" />
+                </div>
+              </div>
+            </div>
+
+            <span className="iphone-caption-meta">Rendu natif 4:5 sur écran OLED Retina</span>
+          </div>
+        </section>
+
+        {/* 3. Les 3 Principes Fondateurs de Scroller (Sobre et Classe) */}
+        <section className="classe-triad-section">
+          <div className="triad-item">
+            <span className="triad-num">01</span>
+            <h3>Plein Écran Vertical</h3>
+            <p>Le format immersif 4:5 et les séquences 9:16 sans bordures inutiles, calibrés au pixel près pour votre smartphone.</p>
+          </div>
+
+          <div className="triad-item">
+            <span className="triad-num">02</span>
+            <h3>Sanctuaire 100% Local</h3>
+            <p>Vos contenus ne quittent jamais votre terminal. Stockage flash interne chiffré, sans transmission cloud.</p>
+          </div>
+
+          <div className="triad-item">
+            <span className="triad-num">03</span>
+            <h3>Zéro Regard Extérieur</h3>
+            <p>Pas d'abonnés, pas de course aux vues, pas d'algorithme. Vous êtes le seul créateur et le seul spectateur.</p>
           </div>
         </section>
       </main>
 
-      {/* Minimal Footer */}
-      <footer className="clean-site-footer">
-        <div className="footer-meta">
-          <span>SCROLLER</span>
-          <span className="sep">·</span>
-          <span>The social media where you're alone</span>
+      {/* 4. Footer discret & noble */}
+      <footer className="classe-site-footer">
+        <div className="footer-left-wrap">
+          <img src="/logo.png" alt="Scroller" className="footer-logo-tiny" />
+          <span className="footer-tagline">SCROLLER — The social media where you're alone.</span>
         </div>
-        <div className="footer-spec">
-          <span>100% Hors-ligne · Chiffrement local</span>
-        </div>
+        <span className="footer-right-tech">Souveraineté des données · Hors-ligne</span>
       </footer>
     </div>
   );
