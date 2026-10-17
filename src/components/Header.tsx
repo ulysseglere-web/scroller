@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Moon, Sun, Volume2, VolumeX, Sparkles } from 'lucide-react';
+import { Moon, Sun, Volume2, VolumeX, Sparkles, Shuffle } from 'lucide-react';
 import { sound } from '../services/sound';
 
 interface HeaderProps {
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
   onOpenRandomMemory: () => void;
+  onReshuffleFeed?: () => void;
   totalPostsCount: number;
   onOpenCmd: () => void;
 }
@@ -14,6 +15,7 @@ export const Header: React.FC<HeaderProps> = ({
   theme,
   onToggleTheme,
   onOpenRandomMemory,
+  onReshuffleFeed,
   totalPostsCount,
 }) => {
   const [soundEnabled, setSoundEnabled] = useState(sound.getEnabled());
@@ -33,6 +35,21 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="header-actions">
+        {/* Shuffle Random Feed */}
+        {totalPostsCount > 1 && onReshuffleFeed && (
+          <button
+            className="header-icon-btn btn-shuffle-feed"
+            onClick={() => {
+              sound.playPop();
+              onReshuffleFeed();
+            }}
+            title="Mélanger les souvenirs du fil"
+            aria-label="Mélanger le fil"
+          >
+            <Shuffle size={19} strokeWidth={1.8} />
+          </button>
+        )}
+
         {/* Flashback Souvenir aléatoire */}
         {totalPostsCount > 0 && (
           <button 

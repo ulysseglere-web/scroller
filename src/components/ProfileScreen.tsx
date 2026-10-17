@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Download, 
   Upload, 
@@ -15,7 +15,14 @@ import {
   Play, 
   Heart,
   Lock,
-  Trash2
+  Trash2,
+  Search,
+  X,
+  ArrowDownWideNarrow,
+  ArrowUpWideNarrow,
+  Calendar,
+  List,
+  Layers
 } from 'lucide-react';
 import type { PostItem, UserProfile, StoryHighlight } from '../types';
 
@@ -33,7 +40,8 @@ interface ProfileScreenProps {
   onOpenMediaViewer: (mediaUrls: string[], initialIndex: number) => void;
 }
 
-type ProfileTab = 'grid' | 'reels' | 'notes' | 'saved';
+type ProfileTab = 'all' | 'grid' | 'reels' | 'notes' | 'saved';
+type SortOrder = 'desc' | 'asc';
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   profile,
@@ -48,24 +56,81 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onOpenStory,
   onOpenMediaViewer,
 }) => {
-  const [activeTab, setActiveTab] = useState<ProfileTab>('grid');
+  const [activeTab, setActiveTab] = useState<ProfileTab>('all');
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [username, setUsername] = useState(profile.username);
   const [bio, setBio] = useState(profile.bio);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl);
 
+  // Search & Chronological retrieval controls
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [selectedYear, setSelectedYear] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
   // New highlight modal
   const [isAddingHighlight, setIsAddingHighlight] = useState(false);
   const [newHlTitle, setNewHlTitle] = useState('');
   const [newHlCover, setNewHlCover] = useState('');
 
-  const activePosts = posts.filter((p) => !p.isArchived);
-  const photoPosts = activePosts.filter((p) => p.type === 'photo' || p.type === 'carousel');
-  const reelPosts = activePosts.filter((p) => p.type === 'reel' || p.type === 'video');
-  const noteQuotePosts = activePosts.filter((p) => p.type === 'note' || p.type === 'quote');
-  const savedPosts = activePosts.filter((p) => p.isFavorite);
+  const activePosts = useMemo(() => posts.filter((p) => !p.isArchived), [posts]);
 
+  // Available years dynamically computed
+  const availableYears = useMemo(() => {
+    const years = new Set<string>();
+    activePosts.forEach((p) => {
+      if (p.createdAt) {
+        years.add(new Date(p.createdAt).getFullYear().toString());
+      }
+    });
+    return Array.from(years).sort((a, b) => Number(b) - Number(a));
+  }, [activePosts]);
+
+  // Filtered & Chronologically sorted memories
+  const filteredProfilePosts = useMemo(() => {
+    let list = [...activePosts];
+
+    // 1. Filter by category tab
+    if (activeTab === 'grid') {
+      list = list.filter((p) => p.type === 'photo' || p.type === 'carousel');
+    } else if (activeTab === 'reels') {
+      list = list.filter((p) => p.type === 'reel' || p.type === 'video');
+    } else if (activeTab === 'notes') {
+      list = list.filter((p) => p.type === 'note' || p.type === 'quote');
+    } else if (activeTab === 'saved') {
+      list = list.filter((p) => p.isFavorite);
+    }
+
+    // 2. Filter by Year
+    if (selectedYear !== 'all') {
+      list = list.filter((p) => new Date(p.createdAt).getFullYear().toString() === selectedYear);
+    }
+
+    // 3. Filter by Search Query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((p) => {
+        const matchCaption = p.caption?.toLowerCase().includes(q);
+        const matchNote = p.noteBody?.toLowerCase().includes(q);
+        const matchQuote = p.quoteData?.quote.toLowerCase().includes(q) || p.quoteData?.author.toLowerCase().includes(q);
+        const matchLoc = p.location?.toLowerCase().includes(q);
+        const matchTags = p.tags?.some((t) => t.toLowerCase().includes(q));
+        return Boolean(matchCaption || matchNote || matchQuote || matchLoc || matchTags);
+      });
+    }
+
+    // 4. Chronological Sort (desc: newest first, asc: oldest first)
+    return list.sort((a, b) => {
+      const timeA = new Date(a.createdAt).getTime();
+      const timeB = new Date(b.createdAt).getTime();
+      return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+    });
+  }, [activePosts, activeTab, selectedYear, searchQuery, sortOrder]);
+
+  const photoPosts = useMemo(() => activePosts.filter((p) => p.type === 'photo' || p.type === 'carousel'), [activePosts]);
+  const reelPosts = useMemo(() => activePosts.filter((p) => p.type === 'reel' || p.type === 'video'), [activePosts]);
+  const savedPosts = useMemo(() => activePosts.filter((p) => p.isFavorite), [activePosts]);
   const highlights = profile.highlights || [];
 
   const handleSaveProfile = (e: React.FormEvent) => {
@@ -295,32 +360,121 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </div>
       )}
 
-      {/* 3. Instagram Profile Tabs Navigation */}
+      {/* 3. Sanctuary Retrieval Hub (Search & Chronological Filters) */}
+      <div className="profile-retrieval-hub">
+        <div className="profile-search-bar-wrap">
+          <Search size={16} className="profile-search-icon" />
+          <input
+            type="text"
+            className="profile-search-input"
+            placeholder="Retrouver une pensée, un mot, un lieu..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="Recherche dans les archives"
+          />
+          {searchQuery && (
+            <button 
+              className="btn-clear-search" 
+              onClick={() => setSearchQuery('')}
+              aria-label="Effacer la recherche"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        {/* Chronological Controls & View Toggle */}
+        <div className="profile-retrieval-controls">
+          <div className="controls-left">
+            {/* Sort Order Toggle */}
+            <button
+              className="retrieval-btn sort-btn"
+              onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
+              title={sortOrder === 'desc' ? 'Classé du plus récent au plus ancien' : 'Classé du plus ancien au plus récent'}
+            >
+              {sortOrder === 'desc' ? <ArrowDownWideNarrow size={15} /> : <ArrowUpWideNarrow size={15} />}
+              <span>{sortOrder === 'desc' ? 'Plus récents' : 'Plus anciens'}</span>
+            </button>
+
+            {/* Year Selector (if memories span across years) */}
+            {availableYears.length > 1 && (
+              <div className="year-selector-wrap">
+                <Calendar size={14} className="year-icon" />
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="year-dropdown"
+                >
+                  <option value="all">Toutes les années</option>
+                  {availableYears.map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
+          <div className="controls-right">
+            <span className="results-count-badge">
+              {filteredProfilePosts.length} souvenir{filteredProfilePosts.length > 1 ? 's' : ''}
+            </span>
+
+            {/* View Mode Toggle (Grid vs Chrono List) */}
+            <div className="view-mode-toggle">
+              <button
+                className={`view-mode-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title="Vue Grille"
+              >
+                <Grid size={15} />
+              </button>
+              <button
+                className={`view-mode-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="Vue Chronologique Détaillée"
+              >
+                <List size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Instagram Profile Tabs Navigation (5 Pure Categories) */}
       <div className="profile-content-tabs">
+        <button
+          className={`profile-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+          onClick={() => setActiveTab('all')}
+          title="Tous les souvenirs"
+        >
+          <Layers size={16} />
+          <span className="tab-text">TOUT</span>
+        </button>
+
         <button
           className={`profile-tab-btn ${activeTab === 'grid' ? 'active' : ''}`}
           onClick={() => setActiveTab('grid')}
-          title="Grille de photos et posts"
+          title="Photos & Galeries"
         >
-          <Grid size={18} />
-          <span className="tab-text">PUBLICATIONS</span>
+          <Grid size={16} />
+          <span className="tab-text">PHOTOS</span>
         </button>
 
         <button
           className={`profile-tab-btn ${activeTab === 'reels' ? 'active' : ''}`}
           onClick={() => setActiveTab('reels')}
-          title="Reels & Vidéos courtes"
+          title="Reels & Vidéos"
         >
-          <Film size={18} />
+          <Film size={16} />
           <span className="tab-text">REELS</span>
         </button>
 
         <button
           className={`profile-tab-btn ${activeTab === 'notes' ? 'active' : ''}`}
           onClick={() => setActiveTab('notes')}
-          title="Pensées & Citations"
+          title="Écrits & Pensées"
         >
-          <BookOpen size={18} />
+          <BookOpen size={16} />
           <span className="tab-text">ÉCRITS</span>
         </button>
 
@@ -329,151 +483,119 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           onClick={() => setActiveTab('saved')}
           title="Favoris & Pépites"
         >
-          <Bookmark size={18} />
-          <span className="tab-text">ENREGISTRÉS</span>
+          <Bookmark size={16} />
+          <span className="tab-text">FAVORIS</span>
         </button>
       </div>
 
-      {/* 4. Tab Content Grids */}
-      {/* TAB 1: Grid (Photos & Carousels) */}
-      {activeTab === 'grid' && (
-        <div className="profile-grid-display">
-          {photoPosts.length === 0 ? (
-            <div className="profile-empty-tab">
-              <Grid size={36} />
-              <h4>Aucune photo pour le moment</h4>
-              <p>Capturez des moments pour remplir votre grille personnelle.</p>
-            </div>
-          ) : (
-            <div className="profile-3col-grid">
-              {photoPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="profile-grid-item"
-                  onClick={() => {
-                    if (post.mediaUrls && post.mediaUrls.length > 0) {
-                      onOpenMediaViewer(post.mediaUrls, 0);
-                    }
-                  }}
-                >
-                  <img src={post.mediaUrls?.[0]} alt={post.caption} />
-                  {post.type === 'carousel' && (
-                    <span className="profile-item-badge">❐</span>
-                  )}
-                  <div className="profile-grid-hover">
-                    {post.isFavorite && <Heart size={18} fill="#ffffff" color="#ffffff" />}
+      {/* 5. Chronological Display (Grid or Detailed List) */}
+      <div className="profile-grid-display">
+        {filteredProfilePosts.length === 0 ? (
+          <div className="profile-empty-tab">
+            <Search size={36} className="text-secondary" />
+            <h4>Aucun souvenir ne correspond</h4>
+            <p>Essayez de modifier votre recherche ou vos filtres temporels.</p>
+            {(searchQuery || selectedYear !== 'all') && (
+              <button 
+                className="btn-reset-filters"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedYear('all');
+                }}
+              >
+                Réinitialiser les filtres
+              </button>
+            )}
+          </div>
+        ) : viewMode === 'grid' ? (
+          /* Grid View (Instagram 3 columns + visual cells) */
+          <div className="profile-3col-grid">
+            {filteredProfilePosts.map((post) => (
+              <div
+                key={post.id}
+                className="profile-grid-item"
+                onClick={() => {
+                  if (post.mediaUrls && post.mediaUrls.length > 0) {
+                    onOpenMediaViewer(post.mediaUrls, 0);
+                  }
+                }}
+              >
+                {post.mediaUrls && post.mediaUrls.length > 0 ? (
+                  <img src={post.mediaUrls[0]} alt={post.caption || 'Souvenir'} />
+                ) : post.videoUrl ? (
+                  <div className="profile-reel-cell-compact">
+                    <Film size={22} />
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                ) : (
+                  <div className={`saved-text-thumb theme-${post.noteStyle?.bgTheme || 'dark-monochrome'}`}>
+                    <p>{post.noteBody || post.quoteData?.quote || post.caption}</p>
+                  </div>
+                )}
 
-      {/* TAB 2: Reels (9:16 Video Grid) */}
-      {activeTab === 'reels' && (
-        <div className="profile-grid-display">
-          {reelPosts.length === 0 ? (
-            <div className="profile-empty-tab">
-              <Film size={36} />
-              <h4>Aucun Reel publié</h4>
-              <p>Créez votre première vidéo courte dans l'onglet Reels.</p>
-            </div>
-          ) : (
-            <div className="profile-reels-grid">
-              {reelPosts.map((reel) => (
-                <div key={reel.id} className="profile-reel-cell">
-                  {reel.mediaUrls?.[0] ? (
-                    <img src={reel.mediaUrls[0]} alt={reel.caption} className="reel-poster-img" />
-                  ) : (
-                    <div className="reel-no-poster">
-                      <Film size={28} />
+                {post.type === 'carousel' && (
+                  <span className="profile-item-badge">❐</span>
+                )}
+                {post.type === 'video' && (
+                  <span className="profile-item-badge"><Play size={11} fill="#ffffff" /></span>
+                )}
+
+                <div className="profile-grid-hover">
+                  <span className="grid-hover-date">
+                    {new Date(post.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                  </span>
+                  {post.isFavorite && <Heart size={16} fill="#ff1e27" color="#ff1e27" />}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* Detailed Chronological List View */
+          <div className="profile-chrono-list">
+            {filteredProfilePosts.map((post) => (
+              <div 
+                key={post.id} 
+                className="chrono-list-card"
+                onClick={() => {
+                  if (post.mediaUrls && post.mediaUrls.length > 0) {
+                    onOpenMediaViewer(post.mediaUrls, 0);
+                  }
+                }}
+              >
+                <div className="chrono-card-left">
+                  <span className="chrono-date-badge">
+                    {new Date(post.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </span>
+                  {post.mediaUrls && post.mediaUrls.length > 0 && (
+                    <div className="chrono-thumb-wrap">
+                      <img src={post.mediaUrls[0]} alt={post.caption} className="chrono-thumb-img" />
                     </div>
                   )}
-                  <div className="reel-cell-badge">
-                    <Play size={13} fill="#ffffff" color="#ffffff" />
-                    <span>Reel</span>
-                  </div>
-                  <div className="reel-caption-teaser">{reel.caption}</div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* TAB 3: Notes & Quotes */}
-      {activeTab === 'notes' && (
-        <div className="profile-grid-display">
-          {noteQuotePosts.length === 0 ? (
-            <div className="profile-empty-tab">
-              <BookOpen size={36} />
-              <h4>Aucune pensée ni citation</h4>
-              <p>Écrivez vos réflexions spontanées et passages de livres.</p>
-            </div>
-          ) : (
-            <div className="profile-notes-list">
-              {noteQuotePosts.map((item) => (
-                <div 
-                  key={item.id} 
-                  className={`profile-note-snippet-card ${item.type === 'note' ? `theme-${item.noteStyle?.bgTheme || 'midnight-violet'}` : 'quote-style'}`}
-                >
-                  {item.type === 'quote' && item.quoteData ? (
-                    <>
-                      <blockquote className="quote-snippet">« {item.quoteData.quote} »</blockquote>
-                      <div className="quote-meta">— {item.quoteData.author} ({item.quoteData.source})</div>
-                    </>
+                <div className="chrono-card-main">
+                  {post.noteBody ? (
+                    <p className="chrono-note-text">{post.noteBody}</p>
+                  ) : post.quoteData ? (
+                    <blockquote className="chrono-quote-text">« {post.quoteData.quote} » — {post.quoteData.author}</blockquote>
                   ) : (
-                    <p className="note-snippet">{item.noteBody || item.caption}</p>
+                    <p className="chrono-caption-text">{post.caption || 'Sans légende'}</p>
                   )}
-                  <div className="snippet-footer">
-                    <span>{new Date(item.createdAt).toLocaleDateString('fr-FR')}</span>
-                    {item.isFavorite && <Heart size={14} fill="#ff1e27" color="#ff1e27" />}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* TAB 4: Saved / Favorites */}
-      {activeTab === 'saved' && (
-        <div className="profile-grid-display">
-          {savedPosts.length === 0 ? (
-            <div className="profile-empty-tab">
-              <Bookmark size={36} />
-              <h4>Aucun souvenir favori</h4>
-              <p>Double-cliquez sur n'importe quel post pour l'ajouter à vos favoris intimes.</p>
-            </div>
-          ) : (
-            <div className="profile-3col-grid">
-              {savedPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="profile-grid-item"
-                  onClick={() => {
-                    if (post.mediaUrls && post.mediaUrls.length > 0) {
-                      onOpenMediaViewer(post.mediaUrls, 0);
-                    }
-                  }}
-                >
-                  {post.mediaUrls?.[0] ? (
-                    <img src={post.mediaUrls[0]} alt={post.caption} />
-                  ) : (
-                    <div className="saved-text-thumb">
-                      <p>{post.noteBody || post.quoteData?.quote || post.caption}</p>
-                    </div>
+                  {post.location && (
+                    <span className="chrono-location-tag">📍 {post.location}</span>
                   )}
-                  <div className="profile-grid-hover">
-                    <Heart size={18} fill="#ff1e27" color="#ff1e27" />
-                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+
+                {post.isFavorite && (
+                  <div className="chrono-card-fav">
+                    <Heart size={15} fill="#ff1e27" color="#ff1e27" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* 5. Privacy & Philosophy Guarantee */}
       <div className="privacy-guarantee-card">

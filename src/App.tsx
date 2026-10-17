@@ -417,7 +417,10 @@ export const App: React.FC = () => {
     setRandomMemory(activePosts[randomIndex]);
   };
 
-  // Filtered and sorted feed posts
+  // Shuffle seed for 100% random memories feed
+  const [shuffleSeed, setShuffleSeed] = useState(0);
+
+  // 100% Random & Surprising Feed (Fisher-Yates Shuffle)
   const feedPosts = useMemo(() => {
     let result = posts.filter((p) => !p.isArchived);
 
@@ -437,13 +440,20 @@ export const App: React.FC = () => {
       result = result.filter((p) => p.type === 'link');
     }
 
-    // Sort: Pinned first, then reverse chronological
-    return result.sort((a, b) => {
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-  }, [posts, feedFilter]);
+    if (result.length <= 1) return result;
+
+    // Pinned posts stay at the very top, while all other memories are randomly shuffled
+    const pinned = result.filter((p) => p.isPinned);
+    const unpinned = result.filter((p) => !p.isPinned);
+
+    const shuffled = [...unpinned];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    return [...pinned, ...shuffled];
+  }, [posts, feedFilter, shuffleSeed]);
 
   const archivedCount = useMemo(() => posts.filter((p) => p.isArchived).length, [posts]);
   const hasFavorites = useMemo(() => posts.some((p) => p.isFavorite && !p.isArchived), [posts]);
@@ -495,6 +505,7 @@ export const App: React.FC = () => {
               theme={theme}
               onToggleTheme={handleToggleTheme}
               onOpenRandomMemory={handleOpenRandomMemory}
+              onReshuffleFeed={() => setShuffleSeed((s) => s + 1)}
               totalPostsCount={feedPosts.length}
               onOpenCmd={() => setIsCmdOpen(true)}
             />
