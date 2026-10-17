@@ -122,7 +122,7 @@ export const App: React.FC = () => {
 
       // Doit être un swipe horizontal vif (< 500ms, distance > 55px, angle très horizontal)
       if (elapsed < 500 && Math.abs(deltaX) > 55 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
-        const TABS: NavTab[] = ['home', 'search', 'reels', 'profile'];
+        const TABS: NavTab[] = ['home', 'reels', 'search', 'profile'];
         const currentIndex = TABS.indexOf(activeTab);
 
         if (currentIndex !== -1) {

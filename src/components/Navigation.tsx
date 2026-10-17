@@ -52,7 +52,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             aria-label="Fil d'actualité"
           >
             <Home size={22} strokeWidth={activeTab === 'home' ? 2.4 : 1.8} />
-            <span className="nav-label">Accueil</span>
+            <span className="nav-label">Feed</span>
           </button>
 
           <button
@@ -65,21 +65,21 @@ export const Navigation: React.FC<NavigationProps> = ({
           </button>
 
           <button
-            className={`sidebar-nav-item ${activeTab === 'search' ? 'active' : ''}`}
-            onClick={() => handleTabClick('search')}
-            aria-label="Explorer"
-          >
-            <Compass size={22} strokeWidth={activeTab === 'search' ? 2.4 : 1.8} />
-            <span className="nav-label">Explorer</span>
-          </button>
-
-          <button
             className="sidebar-nav-item create-action-item"
             onClick={handleCreateClick}
             aria-label="Créer"
           >
             <PlusSquare size={22} strokeWidth={1.8} />
             <span className="nav-label">Créer</span>
+          </button>
+
+          <button
+            className={`sidebar-nav-item ${activeTab === 'search' ? 'active' : ''}`}
+            onClick={() => handleTabClick('search')}
+            aria-label="Recherche"
+          >
+            <Compass size={22} strokeWidth={activeTab === 'search' ? 2.4 : 1.8} />
+            <span className="nav-label">Recherche</span>
           </button>
 
           <button
@@ -118,33 +118,19 @@ export const Navigation: React.FC<NavigationProps> = ({
         </div>
       </aside>
 
-      {/* Barre de navigation basse Mobile (< 768px) - 5 icônes pures et parfaitement régulières */}
+      {/* Barre de navigation basse Mobile (< 768px) - Feed - reels - créer - recherche - profil */}
       <nav className="insta-bottom-bar-wrap" aria-label="Navigation mobile">
         <div className="insta-bottom-bar">
+          {/* 1. Feed */}
           <button
             className={`dock-item ${activeTab === 'home' ? 'active' : ''}`}
             onClick={() => handleTabClick('home')}
-            aria-label="Accueil"
+            aria-label="Feed"
           >
             <Home size={24} strokeWidth={activeTab === 'home' ? 2.4 : 1.7} />
           </button>
 
-          <button
-            className={`dock-item ${activeTab === 'search' ? 'active' : ''}`}
-            onClick={() => handleTabClick('search')}
-            aria-label="Explorer"
-          >
-            <Compass size={24} strokeWidth={activeTab === 'search' ? 2.4 : 1.7} />
-          </button>
-
-          <button
-            className="dock-item dock-create-btn"
-            onClick={handleCreateClick}
-            aria-label="Créer"
-          >
-            <PlusSquare size={24} strokeWidth={1.8} />
-          </button>
-
+          {/* 2. Reels */}
           <button
             className={`dock-item ${activeTab === 'reels' ? 'active' : ''}`}
             onClick={() => handleTabClick('reels')}
@@ -153,6 +139,25 @@ export const Navigation: React.FC<NavigationProps> = ({
             <Film size={24} strokeWidth={activeTab === 'reels' ? 2.4 : 1.7} />
           </button>
 
+          {/* 3. Créer */}
+          <button
+            className="dock-item dock-create-btn"
+            onClick={handleCreateClick}
+            aria-label="Créer"
+          >
+            <PlusSquare size={24} strokeWidth={1.8} />
+          </button>
+
+          {/* 4. Recherche */}
+          <button
+            className={`dock-item ${activeTab === 'search' ? 'active' : ''}`}
+            onClick={() => handleTabClick('search')}
+            aria-label="Recherche"
+          >
+            <Compass size={24} strokeWidth={activeTab === 'search' ? 2.4 : 1.7} />
+          </button>
+
+          {/* 5. Profil */}
           <button
             className={`dock-item ${activeTab === 'profile' ? 'active' : ''}`}
             onClick={() => handleTabClick('profile')}
