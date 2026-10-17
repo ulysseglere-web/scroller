@@ -16,6 +16,8 @@ interface CreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSavePost: (post: PostItem) => void;
+  initialFiles?: string[];
+  initialMode?: 'media' | 'note';
 }
 
 type CaptureMode = 'media' | 'note';
@@ -27,8 +29,14 @@ const NOTE_THEMES: { id: NoteStyle['bgTheme']; label: string; bg: string; color:
   { id: 'warm-amber', label: 'Rubis Sombre', bg: '#1c0d0e', color: '#fff1f2' },
 ];
 
-export const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose, onSavePost }) => {
-  const [mode, setMode] = useState<CaptureMode>('media');
+export const CreateModal: React.FC<CreateModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onSavePost, 
+  initialFiles = [],
+  initialMode = 'media'
+}) => {
+  const [mode, setMode] = useState<CaptureMode>(initialMode);
 
   // Common fields
   const [caption, setCaption] = useState('');
@@ -37,12 +45,30 @@ export const CreateModal: React.FC<CreateModalProps> = ({ isOpen, onClose, onSav
   const [isFavorite, setIsFavorite] = useState(false);
 
   // Media state (photos / carousel / video)
-  const [selectedMediaFiles, setSelectedMediaFiles] = useState<string[]>([]);
+  const [selectedMediaFiles, setSelectedMediaFiles] = useState<string[]>(initialFiles);
   const [videoUrl, setVideoUrl] = useState<string>('');
 
   // Note state
   const [noteBody, setNoteBody] = useState('');
   const [noteBg, setNoteBg] = useState<NoteStyle['bgTheme']>('dark-monochrome');
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialFiles && initialFiles.length > 0) {
+        const isVid = initialFiles.some(f => f.startsWith('blob:') || f.startsWith('data:video/') || f.endsWith('.mp4') || f.endsWith('.mov') || f.endsWith('.webm'));
+        if (isVid) {
+          setVideoUrl(initialFiles[0]);
+          setSelectedMediaFiles([]);
+        } else {
+          setSelectedMediaFiles(initialFiles);
+          setVideoUrl('');
+        }
+        setMode('media');
+      } else if (initialMode) {
+        setMode(initialMode);
+      }
+    }
+  }, [isOpen, initialFiles, initialMode]);
 
   // Camera state
   const [isCameraActive, setIsCameraActive] = useState(false);

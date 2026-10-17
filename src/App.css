@@ -646,8 +646,121 @@
   box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
 }
 
-.cat-icon {
+/* ============================================================ */
+/* QUICK CAPTURE BAR (ZERO-FRICTION CAPTURE)                    */
+/* ============================================================ */
+.quick-capture-wrap {
+  padding: 4px 14px 12px 14px;
+  width: 100%;
+}
+
+.quick-capture-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.quick-capture-wrap.focused .quick-capture-card {
+  border-color: rgba(255, 30, 39, 0.4);
+  box-shadow: 0 0 16px rgba(255, 30, 39, 0.12);
+  background: var(--bg-hover);
+}
+
+.quick-avatar-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
   flex-shrink: 0;
+  border: 1px solid var(--border-color);
+}
+
+.quick-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.quick-input-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.quick-capture-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.quick-capture-input::placeholder {
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+
+.quick-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-quick-cam {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-quick-cam:hover {
+  color: #ff1e27;
+  background: rgba(255, 30, 39, 0.1);
+  transform: scale(1.05);
+}
+
+.btn-quick-send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #ff1e27;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(255, 30, 39, 0.4);
+  transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: popInQuick 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.btn-quick-send:hover {
+  background: #e0161f;
+  transform: scale(1.08);
+}
+
+@keyframes popInQuick {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 /* ============================================================ */

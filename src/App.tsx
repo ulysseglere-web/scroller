@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import './App.css';
 import type { PostItem, UserProfile, NavTab, FeedFilter, StoryHighlight } from './types';
 import { 
@@ -16,6 +16,7 @@ import {
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
 import { HighlightsBar } from './components/HighlightsBar';
+import { QuickCaptureBar } from './components/QuickCaptureBar';
 import { PostCard } from './components/PostCard';
 import { ReelsFeed } from './components/ReelsFeed';
 import { StoryViewerModal } from './components/StoryViewerModal';
@@ -56,6 +57,10 @@ export const App: React.FC = () => {
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [preloadedFiles, setPreloadedFiles] = useState<string[]>([]);
+  const [createInitialMode, setCreateInitialMode] = useState<'media' | 'note'>('media');
+  const directFileInputRef = useRef<HTMLInputElement>(null);
+
   const [isCmdOpen, setIsCmdOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<PostItem | null>(null);
   const [viewerMedia, setViewerMedia] = useState<{ urls: string[]; initialIndex: number } | null>(null);
@@ -232,6 +237,52 @@ export const App: React.FC = () => {
     setActiveTab('home');
   };
 
+  // Zero-friction capture handlers
+  const handleDirectMediaClick = () => {
+    if (directFileInputRef.current) {
+      directFileInputRef.current.click();
+    }
+  };
+
+  const handleDirectMediaSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const urls: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.type.startsWith('video/')) {
+        urls.push(URL.createObjectURL(file));
+      } else {
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => resolve(ev.target?.result as string);
+          reader.readAsDataURL(file);
+        });
+        urls.push(base64);
+      }
+    }
+
+    setPreloadedFiles(urls);
+    setCreateInitialMode('media');
+    setIsCreateOpen(true);
+    e.target.value = '';
+  };
+
+  const handleQuickSaveNote = async (text: string) => {
+    const newPost: PostItem = {
+      id: `post_${Date.now()}`,
+      type: 'note',
+      createdAt: new Date().toISOString(),
+      caption: '',
+      noteBody: text,
+      noteStyle: { bgTheme: 'dark-monochrome', fontSize: 'large' },
+      tags: [],
+      isFavorite: false,
+    };
+    await handleSaveNewPost(newPost);
+  };
+
   const handleSaveEditedPost = async (updatedPost: PostItem) => {
     sound.playTap();
     await savePost(updatedPost);
@@ -357,7 +408,7 @@ export const App: React.FC = () => {
           setActiveTab(tab);
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
-        onOpenCreate={() => setIsCreateOpen(true)}
+        onOpenCreate={handleDirectMediaClick}
         profile={profile}
         theme={theme}
         onToggleTheme={handleToggleTheme}
@@ -381,12 +432,19 @@ export const App: React.FC = () => {
             <HighlightsBar
               currentFilter={feedFilter}
               onSelectFilter={setFeedFilter}
-              onOpenCreate={() => setIsCreateOpen(true)}
+              onOpenCreate={handleDirectMediaClick}
               onOpenRandomMemory={handleOpenRandomMemory}
               hasFavorites={hasFavorites}
               profile={profile}
               highlights={profile.highlights || []}
               onOpenStory={(hl) => setSelectedHighlight(hl)}
+            />
+
+            {/* Instant Quick Capture Bar (Zero friction: inline thought or direct media) */}
+            <QuickCaptureBar
+              profile={profile}
+              onSubmitText={handleQuickSaveNote}
+              onDirectMediaClick={handleDirectMediaClick}
             />
 
             {/* Posts Feed */}
@@ -403,7 +461,7 @@ export const App: React.FC = () => {
                 </p>
                 <button
                   className="btn-create-first"
-                  onClick={() => setIsCreateOpen(true)}
+                  onClick={handleDirectMediaClick}
                 >
                   <Plus size={18} /> <span>Capturer mon premier souvenir</span>
                 </button>
@@ -485,8 +543,13 @@ export const App: React.FC = () => {
       {isCreateOpen && (
         <CreateModal
           isOpen={isCreateOpen}
-          onClose={() => setIsCreateOpen(false)}
+          onClose={() => {
+            setIsCreateOpen(false);
+            setPreloadedFiles([]);
+          }}
           onSavePost={handleSaveNewPost}
+          initialFiles={preloadedFiles}
+          initialMode={createInitialMode}
         />
       )}
 
@@ -564,6 +627,16 @@ export const App: React.FC = () => {
         onOpenRandomMemory={handleOpenRandomMemory}
         theme={theme}
         onExport={handleExportBackup}
+      />
+
+      {/* Hidden File Input for Instant Zero-Friction Media Capture */}
+      <input
+        ref={directFileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        multiple
+        style={{ display: 'none' }}
+        onChange={handleDirectMediaSelected}
       />
     </div>
   );
