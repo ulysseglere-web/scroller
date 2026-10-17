@@ -67,8 +67,9 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [showMenu, setShowMenu] = useState(false);
   // Expand long caption
   const [isExpanded, setIsExpanded] = useState(false);
-  // Private annotation drawer
+  // Comments state
   const [showAnnotationInput, setShowAnnotationInput] = useState(false);
+  const [commentDraft, setCommentDraft] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
   // Heart pop animation on double tap
   const [showHeartPop, setShowHeartPop] = useState(false);
@@ -180,6 +181,19 @@ export const PostCard: React.FC<PostCardProps> = ({
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
     }
+  };
+
+  const handleSaveComment = (text: string) => {
+    const clean = text.trim();
+    const updated = { ...post, privateAnnotation: clean || undefined };
+    if (onUpdatePost) {
+      onUpdatePost(updated);
+    } else {
+      onEdit(updated);
+    }
+    sound.playPop();
+    setCommentDraft('');
+    setShowAnnotationInput(false);
   };
 
   const userInitial = (profile.displayName || profile.username || 'A').slice(0, 1).toUpperCase();
@@ -507,8 +521,8 @@ export const PostCard: React.FC<PostCardProps> = ({
           <button
             className={`action-btn ${post.privateAnnotation ? 'annotated' : ''}`}
             onClick={() => setShowAnnotationInput(!showAnnotationInput)}
-            title="Note privée"
-            aria-label="Commenter / Note intime"
+            title="Commentaires"
+            aria-label="Commentaires"
           >
             <MessageCircle size={24} strokeWidth={1.8} />
           </button>
@@ -542,7 +556,7 @@ export const PostCard: React.FC<PostCardProps> = ({
         </span>
       </div>
 
-      {/* Caption & Annotation Section */}
+      {/* Caption & Comments Section */}
       <div className="post-caption-area">
         {post.caption && (
           <div className="post-caption-text">
@@ -577,27 +591,51 @@ export const PostCard: React.FC<PostCardProps> = ({
           </div>
         )}
 
-        {/* Private Annotation Display */}
+        {/* Comments Stream (Instagram/Threads style) */}
         {post.privateAnnotation && (
-          <div className="private-annotation-card">
-            <span className="annotation-lead">Note intime :</span>
-            <p className="annotation-body">{post.privateAnnotation}</p>
+          <div className="post-comments-wrap">
+            <div className="post-comment-line">
+              <span className="comment-author">{profile.username}</span>{' '}
+              <span className="comment-text">{post.privateAnnotation}</span>
+              <button
+                type="button"
+                className="btn-edit-comment-inline"
+                onClick={() => {
+                  setCommentDraft(post.privateAnnotation || '');
+                  setShowAnnotationInput(true);
+                }}
+                title="Modifier le commentaire"
+              >
+                <Edit3 size={12} />
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Quick inline annotation toggle if user clicks comment */}
-        {showAnnotationInput && !post.privateAnnotation && (
-          <div className="annotation-input-box">
+        {/* Clean Comment Composer */}
+        {(showAnnotationInput || !post.privateAnnotation) && (
+          <div className="post-comment-composer">
             <input
               type="text"
-              placeholder="Ajouter une réflexion personnelle..."
+              className="comment-clean-input"
+              placeholder="Ajouter un commentaire..."
+              value={commentDraft}
+              onChange={(e) => setCommentDraft(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                  onEdit({ ...post, privateAnnotation: e.currentTarget.value.trim() });
-                  setShowAnnotationInput(false);
+                if (e.key === 'Enter' && commentDraft.trim()) {
+                  handleSaveComment(commentDraft);
                 }
               }}
             />
+            {commentDraft.trim() && (
+              <button
+                type="button"
+                className="btn-comment-publish"
+                onClick={() => handleSaveComment(commentDraft)}
+              >
+                Publier
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -434,17 +434,18 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
                   <span className="reel-action-label">Favori</span>
                 </button>
 
-                {/* Private Reflection Annotation */}
+                {/* Comment Action */}
                 <button
                   className={`reel-action-btn ${reel.privateAnnotation ? 'active-note' : ''}`}
                   onClick={() => {
                     setActiveAnnotationPost(reel);
                     setAnnotationText(reel.privateAnnotation || '');
                   }}
-                  aria-label="Note intime"
+                  aria-label="Commentaires"
+                  title="Commentaires"
                 >
                   <MessageSquare size={26} strokeWidth={2} color="#ffffff" />
-                  <span className="reel-action-label">Note</span>
+                  <span className="reel-action-label">Coms</span>
                 </button>
 
                 {/* Archive */}
@@ -578,26 +579,23 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
         <div className="modal-backdrop" onClick={() => setActiveAnnotationPost(null)}>
           <div className="annotation-drawer-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="drawer-header">
-              <h3>Réflexion intime sur ce Reel</h3>
+              <h3>Commentaires</h3>
               <button className="btn-close-modal" onClick={() => setActiveAnnotationPost(null)}>
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleSaveAnnotation} className="drawer-form">
-              <p className="drawer-sub">
-                Cette note n'est visible que par vous. Notez vos ressentis, ce que ce moment vous inspire ou une idée à creuser.
-              </p>
               <textarea
-                rows={4}
+                rows={3}
                 value={annotationText}
                 onChange={(e) => setAnnotationText(e.target.value)}
-                placeholder="Votre réflexion personnelle..."
+                placeholder="Ajouter un commentaire..."
                 autoFocus
               />
               <div className="drawer-actions">
                 <button type="submit" className="btn-send-annotation">
-                  <Send size={15} /> <span>Enregistrer ma note</span>
+                  <Send size={15} /> <span>Publier</span>
                 </button>
               </div>
             </form>

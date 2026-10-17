@@ -89,13 +89,13 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
 
           <div className="form-field">
             <label>
-              <MessageSquare size={15} /> Note personnelle & réflexion intime
+              <MessageSquare size={15} /> Commentaires
             </label>
             <textarea
               rows={3}
               value={privateAnnotation}
               onChange={(e) => setPrivateAnnotation(e.target.value)}
-              placeholder="Une note visible uniquement par vous..."
+              placeholder="Ajouter un commentaire..."
             />
           </div>
         </form>

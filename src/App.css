@@ -284,7 +284,7 @@
 
 .feed-column-container {
   width: 100%;
-  max-width: 630px;
+  max-width: 480px;
   display: flex;
   flex-direction: column;
   margin: 0 auto;
@@ -314,7 +314,8 @@
   background: rgba(0, 0, 0, 0.88);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-inline: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -324,8 +325,9 @@
 
 @media (min-width: 768px) {
   .app-header {
-    border-inline: 1px solid var(--border-color);
-    max-width: 630px;
+    border-inline: none;
+    max-width: 480px;
+    margin: 0 auto;
   }
 }
 
@@ -496,8 +498,9 @@
 /* ============================================================ */
 .stories-and-filters-container {
   width: 100%;
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-color);
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-inline: none;
   padding: 14px 0 10px;
   display: flex;
   flex-direction: column;
@@ -511,7 +514,7 @@
 
 @media (min-width: 768px) {
   .stories-and-filters-container {
-    border-inline: 1px solid var(--border-color);
+    border-inline: none;
   }
 }
 
@@ -760,18 +763,17 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
   backdrop-filter: blur(20px);
   transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .quick-capture-wrap.focused .quick-capture-card {
-  border-color: rgba(255, 30, 39, 0.4);
-  box-shadow: 0 0 16px rgba(255, 30, 39, 0.12);
-  background: var(--bg-hover);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .quick-avatar-wrap {
@@ -870,21 +872,25 @@
 /* ============================================================ */
 .post-card {
   width: 100%;
-  background: var(--bg-card);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border-color);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   flex-direction: column;
+  padding-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 @media (min-width: 768px) {
   .post-card {
-    border-inline: 1px solid var(--border-color);
+    border-inline: none;
+    padding-bottom: 24px;
+    margin-bottom: 20px;
   }
 }
 
 .post-card.is-pinned {
-  border-left: 2px solid var(--accent-electric);
+  border-left: none;
 }
 
 .post-header {
@@ -1329,9 +1335,9 @@
   flex-direction: column;
   justify-content: space-between;
   position: relative;
-  background: var(--bg-card);
-  border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  border-radius: 14px;
   color: var(--text-primary);
 }
 
@@ -1380,15 +1386,15 @@
 .theme-warm-amber,
 .theme-deep-ocean,
 .theme-emerald {
-  background: var(--bg-card);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 /* Quote Display */
 .quote-card-display {
   padding: 28px 24px;
-  background: var(--bg-card);
-  border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -1434,8 +1440,8 @@
 }
 
 .quote-reflection-box {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-xs);
   padding: 8px 12px;
   font-size: 12.5px;
@@ -1456,9 +1462,10 @@
 
 /* Link Card Display */
 .link-card-display {
-  background: var(--bg-card);
-  border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 .link-image-holder {
@@ -1631,41 +1638,92 @@
   color: var(--text-primary);
 }
 
-.private-annotation-card {
-  background: var(--bg-secondary);
-  border-left: 2px solid var(--accent-electric);
-  padding: 6px 12px;
-  margin-top: 4px;
-  border-radius: var(--radius-xs);
+/* ============================================================ */
+/* MODERN COMMENTS STREAM (INSTAGRAM / THREADS STYLE)           */
+/* ============================================================ */
+.post-comments-wrap {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.annotation-lead {
-  font-family: var(--font-mono);
-  font-size: 9px;
+.post-comment-line {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--text-primary);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.comment-author {
   font-weight: 600;
-  text-transform: uppercase;
-  color: var(--accent-electric);
-  letter-spacing: 0.1em;
-  display: block;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
-.annotation-body {
-  font-size: 12.5px;
+.comment-text {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.btn-edit-comment-inline {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 2px 4px;
+  opacity: 0.6;
+  display: inline-flex;
+  align-items: center;
+  transition: opacity 0.15s ease;
+}
+
+.btn-edit-comment-inline:hover {
+  opacity: 1;
   color: var(--text-primary);
 }
 
-.annotation-input-box {
-  margin-top: 4px;
+.post-comment-composer {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.annotation-input-box input {
-  width: 100%;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-xs);
-  padding: 7px 10px;
-  font-size: 12.5px;
+.comment-clean-input {
+  flex: 1;
+  background: transparent;
+  border: none;
   outline: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  padding: 6px 0;
+  font-family: inherit;
+}
+
+.comment-clean-input::placeholder {
+  color: var(--text-tertiary);
+  font-size: 12.5px;
+}
+
+.btn-comment-publish {
+  background: transparent;
+  border: none;
+  color: #ff1e27;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+  transition: opacity 0.15s ease;
+}
+
+.btn-comment-publish:hover {
+  opacity: 0.8;
 }
 
 /* ============================================================ */
