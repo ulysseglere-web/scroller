@@ -281,13 +281,13 @@
 
 .feed-column-container {
   width: 100%;
-  max-width: 520px;
+  max-width: 580px;
   display: flex;
   flex-direction: column;
 }
 
 /* ============================================================ */
-/* ULTRA-MODERN HEADER                                          */
+/* STREAMLINED PRO HEADER (INSTAGRAM / THREADS)                 */
 /* ============================================================ */
 .app-header {
   position: sticky;
@@ -295,33 +295,32 @@
   z-index: 90;
   width: 100%;
   height: var(--header-height);
-  background: rgba(3, 3, 4, 0.85);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 18px;
+  padding: 0 16px;
 }
 
 @media (min-width: 768px) {
   .app-header {
     border-inline: 1px solid var(--border-color);
-    max-width: 520px;
+    max-width: 580px;
   }
 }
 
 .header-left {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  align-items: center;
 }
 
 .brand-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .status-live-pill {
@@ -330,8 +329,8 @@
   gap: 5px;
   padding: 2px 7px;
   border-radius: var(--radius-pill);
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  background: rgba(255, 30, 39, 0.12);
+  border: 1px solid rgba(255, 30, 39, 0.3);
 }
 
 .pulse-dot {
@@ -347,15 +346,8 @@
   font-family: var(--font-mono);
   font-size: 8.5px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   color: var(--accent-electric);
-}
-
-.tagline-sub {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--text-tertiary);
-  letter-spacing: 0.04em;
 }
 
 .header-actions {
@@ -504,98 +496,169 @@
 }
 
 /* ============================================================ */
-/* HIGHLIGHTS BAR / CAPSULES                                    */
+/* STORIES TRAY & MINIMAL FILTER PILLS (INSTAGRAM / THREADS)   */
 /* ============================================================ */
-.highlights-wrapper {
+.stories-and-filters-container {
   width: 100%;
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-color);
-  padding: 12px 0 10px;
+  padding: 14px 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 @media (min-width: 768px) {
-  .highlights-wrapper {
+  .stories-and-filters-container {
     border-inline: 1px solid var(--border-color);
   }
 }
 
-.highlights-scroll {
+.stories-tray-scroll {
   display: flex;
-  gap: 10px;
+  gap: 16px;
   overflow-x: auto;
   padding: 0 16px;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
-.highlights-scroll::-webkit-scrollbar {
+.stories-tray-scroll::-webkit-scrollbar {
   display: none;
 }
 
-.highlight-item {
+.story-circle-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   cursor: pointer;
   flex-shrink: 0;
-  width: 58px;
+  width: 66px;
+  user-select: none;
 }
 
-.highlight-ring {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
+.story-avatar-wrapper {
+  position: relative;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  padding: 2px;
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
+  border: 1.5px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.story-circle-item:hover .story-avatar-wrapper {
+  transform: scale(1.05);
+}
+
+.story-avatar-wrapper.has-story {
+  border: 2px solid #ff1e27;
+  box-shadow: 0 0 10px rgba(255, 30, 39, 0.3);
+}
+
+.story-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #000000;
+}
+
+.story-plus-badge {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: #ff1e27;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.story-avatar-wrapper.echo-story {
+  background: var(--bg-hover);
+  border: 1.5px dashed var(--border-color);
+}
+
+.story-echo-icon {
   color: var(--text-secondary);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.highlight-item:hover .highlight-ring {
-  border-color: var(--border-glass);
-  color: var(--text-primary);
-  transform: translateY(-2px);
-}
-
-.highlight-add {
-  border-style: dashed;
-}
-
-.active-filter .highlight-ring {
-  background: var(--accent-primary);
-  color: var(--accent-inverted);
-  border-color: var(--accent-primary);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-}
-
-.highlight-label {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
+.story-label {
+  font-size: 11px;
   font-weight: 500;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   text-align: center;
-  max-width: 58px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  max-width: 66px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
-.active-filter .highlight-label {
-  font-weight: 700;
+.story-circle-item:hover .story-label {
   color: var(--text-primary);
 }
 
-.highlight-text-bubble {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
+/* Category Filter Pills */
+.feed-category-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.feed-category-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.cat-pill:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.cat-pill.active {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
+}
+
+.cat-icon {
+  flex-shrink: 0;
 }
 
 /* ============================================================ */

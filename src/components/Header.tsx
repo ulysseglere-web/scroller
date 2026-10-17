@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
-import { Moon, Sun, Sparkles, SlidersHorizontal, Command, Volume2, VolumeX } from 'lucide-react';
-import type { FeedFilter } from '../types';
+import { Moon, Sun, Sparkles, Command, Volume2, VolumeX } from 'lucide-react';
 import { sound } from '../services/sound';
 
 interface HeaderProps {
-  currentFilter: FeedFilter;
-  onSelectFilter: (filter: FeedFilter) => void;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
   onOpenRandomMemory: () => void;
@@ -14,8 +11,6 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  currentFilter,
-  onSelectFilter,
   theme,
   onToggleTheme,
   onOpenRandomMemory,
@@ -35,12 +30,11 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="brand-group">
           <img src="/logo.png" alt="SCROLLER" className="brand-app-logo" />
           <span className="brand-wordmark">SCROLLER</span>
-          <div className="status-live-pill" title="Vous êtes le seul utilisateur de ce réseau">
+          <div className="status-live-pill" title="Réseau privé · 100% Hors-ligne">
             <span className="pulse-dot" />
-            <span className="pill-text">ALONE</span>
+            <span className="pill-text">SOLO</span>
           </div>
         </div>
-        <span className="tagline-sub">The social media where you're alone.</span>
       </div>
 
       <div className="header-actions">
@@ -51,14 +45,14 @@ export const Header: React.FC<HeaderProps> = ({
             sound.playPop();
             onOpenCmd();
           }}
-          title="Palette de commandes ultra-rapide (⌘K / Ctrl+K)"
-          aria-label="Palette de commandes"
+          title="Rechercher ou commander (⌘K / Ctrl+K)"
+          aria-label="Recherche"
         >
           <Command size={13} />
           <span className="cmd-pill-key">⌘K</span>
         </button>
 
-        {/* Flashback */}
+        {/* Resurface Flashback */}
         {totalPostsCount > 0 && (
           <button 
             className="header-glass-btn" 
@@ -66,50 +60,22 @@ export const Header: React.FC<HeaderProps> = ({
               sound.playTap();
               onOpenRandomMemory();
             }}
-            title="Se remémorer un moment intime"
-            aria-label="Flashback"
+            title="Souvenir au hasard"
+            aria-label="Écho"
           >
             <Sparkles size={16} strokeWidth={1.8} className="sparkle-icon" />
           </button>
         )}
 
-        {/* Audio FX switch */}
+        {/* Audio FX toggle */}
         <button
           className="header-glass-btn"
           onClick={handleToggleSound}
           title={soundEnabled ? 'Effets sonores actifs' : 'Effets sonores muets'}
-          aria-label="Effets sonores"
+          aria-label="Sons"
         >
           {soundEnabled ? <Volume2 size={16} strokeWidth={1.8} /> : <VolumeX size={16} strokeWidth={1.8} />}
         </button>
-
-        {/* Filter Dropdown */}
-        <div className="filter-dropdown-wrapper">
-          <button 
-            className={`header-glass-btn ${currentFilter !== 'all' ? 'active-filter' : ''}`}
-            title="Filtrer le contenu"
-            aria-label="Filtrer"
-          >
-            <SlidersHorizontal size={15} strokeWidth={1.8} />
-          </button>
-          <select 
-            aria-label="Filtrer le contenu"
-            className="filter-select-overlay"
-            value={currentFilter}
-            onChange={(e) => {
-              sound.playTap();
-              onSelectFilter(e.target.value as FeedFilter);
-            }}
-          >
-            <option value="all">Tout le flux</option>
-            <option value="reels">Reels & Clips</option>
-            <option value="photos">Photos & Séries</option>
-            <option value="notes">Pensées & Notes</option>
-            <option value="quotes">Citations</option>
-            <option value="links">Liens & Lectures</option>
-            <option value="favorites">Favoris personnels</option>
-          </select>
-        </div>
 
         {/* Theme Toggle */}
         <button 

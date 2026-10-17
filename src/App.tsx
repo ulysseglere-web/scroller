@@ -25,7 +25,6 @@ import { ArchiveScreen } from './components/ArchiveScreen';
 import { ProfileScreen } from './components/ProfileScreen';
 import { EditPostModal } from './components/EditPostModal';
 import { CommandPalette } from './components/CommandPalette';
-import { DynamicIsland } from './components/DynamicIsland';
 import { sound } from './services/sound';
 import { Sparkles, Plus } from 'lucide-react';
 
@@ -257,8 +256,6 @@ export const App: React.FC = () => {
           <div className="feed-column-container">
             {/* Header */}
             <Header
-              currentFilter={feedFilter}
-              onSelectFilter={setFeedFilter}
               theme={theme}
               onToggleTheme={handleToggleTheme}
               onOpenRandomMemory={handleOpenRandomMemory}
@@ -266,20 +263,16 @@ export const App: React.FC = () => {
               onOpenCmd={() => setIsCmdOpen(true)}
             />
 
-            {/* Dynamic Telemetry Island Bar */}
-            <DynamicIsland
-              onOpenCmd={() => setIsCmdOpen(true)}
-              onOpenRandom={handleOpenRandomMemory}
-              postCount={posts.filter((p) => !p.isArchived).length}
-            />
-
-            {/* Stories / Highlights Bar */}
+            {/* Stories Tray & Category Pills (Instagram / Threads style) */}
             <HighlightsBar
               currentFilter={feedFilter}
               onSelectFilter={setFeedFilter}
               onOpenCreate={() => setIsCreateOpen(true)}
               onOpenRandomMemory={handleOpenRandomMemory}
               hasFavorites={hasFavorites}
+              profile={profile}
+              highlights={profile.highlights || []}
+              onOpenStory={(hl) => setSelectedHighlight(hl)}
             />
 
             {/* Posts Feed */}

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Sparkles, Heart, Camera, BookOpen, PenTool, Link2, Plus, Film } from 'lucide-react';
-import type { FeedFilter } from '../types';
+import { Plus, Film, Image, PenTool, Heart, Sparkles } from 'lucide-react';
+import type { FeedFilter, UserProfile, StoryHighlight } from '../types';
+import { sound } from '../services/sound';
 
 interface HighlightsBarProps {
   currentFilter: FeedFilter;
@@ -8,6 +9,9 @@ interface HighlightsBarProps {
   onOpenCreate: () => void;
   onOpenRandomMemory: () => void;
   hasFavorites: boolean;
+  profile: UserProfile;
+  highlights: StoryHighlight[];
+  onOpenStory: (highlight: StoryHighlight) => void;
 }
 
 export const HighlightsBar: React.FC<HighlightsBarProps> = ({
@@ -15,116 +19,126 @@ export const HighlightsBar: React.FC<HighlightsBarProps> = ({
   onSelectFilter,
   onOpenCreate,
   onOpenRandomMemory,
+  hasFavorites,
+  profile,
+  highlights,
+  onOpenStory,
 }) => {
+  const handleFilterClick = (filter: FeedFilter) => {
+    sound.playTap();
+    onSelectFilter(filter);
+  };
+
   return (
-    <div className="highlights-wrapper" role="region" aria-label="Filtres de flux">
-      <div className="highlights-scroll">
-        {/* Quick capture button */}
-        <div className="highlight-item" onClick={onOpenCreate} role="button" tabIndex={0}>
-          <div className="highlight-ring highlight-add">
-            <Plus size={18} strokeWidth={1.5} />
-          </div>
-          <span className="highlight-label">Capturer</span>
-        </div>
-
-        {/* Resurface memory */}
-        <div className="highlight-item" onClick={onOpenRandomMemory} role="button" tabIndex={0}>
-          <div className="highlight-ring">
-            <Sparkles size={16} strokeWidth={1.5} />
-          </div>
-          <span className="highlight-label">Écho</span>
-        </div>
-
-        {/* Filter: All */}
-        <div
-          className={`highlight-item ${currentFilter === 'all' ? 'active-filter' : ''}`}
-          onClick={() => onSelectFilter('all')}
+    <div className="stories-and-filters-container">
+      {/* 1. Real Instagram Stories Tray */}
+      <div className="stories-tray-scroll">
+        {/* Your Story (+) */}
+        <div 
+          className="story-circle-item" 
+          onClick={() => {
+            sound.playPop();
+            onOpenCreate();
+          }}
           role="button"
           tabIndex={0}
+          title="Ajouter un souvenir"
         >
-          <div className="highlight-ring">
-            <span className="highlight-text-bubble">TOUT</span>
+          <div className="story-avatar-wrapper add-story">
+            <img 
+              src={profile.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120'} 
+              alt={profile.displayName} 
+              className="story-avatar-img"
+            />
+            <div className="story-plus-badge">
+              <Plus size={11} strokeWidth={3} />
+            </div>
           </div>
-          <span className="highlight-label">Flux</span>
+          <span className="story-label">Votre story</span>
         </div>
 
-        {/* Filter: Reels */}
-        <div
-          className={`highlight-item ${currentFilter === 'reels' ? 'active-filter' : ''}`}
-          onClick={() => onSelectFilter('reels')}
-          role="button"
-          tabIndex={0}
-        >
-          <div className="highlight-ring">
-            <Film size={16} strokeWidth={1.5} />
+        {/* Story Highlights (Stories à la une) */}
+        {highlights.map((hl) => (
+          <div
+            key={hl.id}
+            className="story-circle-item"
+            onClick={() => {
+              sound.playTap();
+              onOpenStory(hl);
+            }}
+            role="button"
+            tabIndex={0}
+            title={hl.title}
+          >
+            <div className="story-avatar-wrapper has-story">
+              <img src={hl.coverUrl} alt={hl.title} className="story-avatar-img" />
+            </div>
+            <span className="story-label">{hl.title}</span>
           </div>
-          <span className="highlight-label">Reels</span>
-        </div>
+        ))}
 
-        {/* Filter: Photos */}
-        <div
-          className={`highlight-item ${currentFilter === 'photos' ? 'active-filter' : ''}`}
-          onClick={() => onSelectFilter('photos')}
+        {/* Resurface Flashback Story */}
+        <div 
+          className="story-circle-item" 
+          onClick={() => {
+            sound.playChime();
+            onOpenRandomMemory();
+          }}
           role="button"
           tabIndex={0}
+          title="Faire resurgir un souvenir"
         >
-          <div className="highlight-ring">
-            <Camera size={16} strokeWidth={1.5} />
+          <div className="story-avatar-wrapper echo-story">
+            <div className="story-echo-icon">
+              <Sparkles size={20} strokeWidth={2} />
+            </div>
           </div>
-          <span className="highlight-label">Images</span>
+          <span className="story-label">Écho</span>
         </div>
+      </div>
 
-        {/* Filter: Notes */}
-        <div
-          className={`highlight-item ${currentFilter === 'notes' ? 'active-filter' : ''}`}
-          onClick={() => onSelectFilter('notes')}
-          role="button"
-          tabIndex={0}
+      {/* 2. Sleek Filter Pills Bar (Threads / Instagram Style) */}
+      <div className="feed-category-pills">
+        <button
+          className={`cat-pill ${currentFilter === 'all' ? 'active' : ''}`}
+          onClick={() => handleFilterClick('all')}
         >
-          <div className="highlight-ring">
-            <PenTool size={16} strokeWidth={1.5} />
-          </div>
-          <span className="highlight-label">Pensées</span>
-        </div>
+          Tout
+        </button>
 
-        {/* Filter: Quotes */}
-        <div
-          className={`highlight-item ${currentFilter === 'quotes' ? 'active-filter' : ''}`}
-          onClick={() => onSelectFilter('quotes')}
-          role="button"
-          tabIndex={0}
+        <button
+          className={`cat-pill ${currentFilter === 'reels' ? 'active' : ''}`}
+          onClick={() => handleFilterClick('reels')}
         >
-          <div className="highlight-ring">
-            <BookOpen size={16} strokeWidth={1.5} />
-          </div>
-          <span className="highlight-label">Citations</span>
-        </div>
+          <Film size={13} className="cat-icon" />
+          <span>Reels</span>
+        </button>
 
-        {/* Filter: Links */}
-        <div
-          className={`highlight-item ${currentFilter === 'links' ? 'active-filter' : ''}`}
-          onClick={() => onSelectFilter('links')}
-          role="button"
-          tabIndex={0}
+        <button
+          className={`cat-pill ${currentFilter === 'photos' ? 'active' : ''}`}
+          onClick={() => handleFilterClick('photos')}
         >
-          <div className="highlight-ring">
-            <Link2 size={16} strokeWidth={1.5} />
-          </div>
-          <span className="highlight-label">Liens</span>
-        </div>
+          <Image size={13} className="cat-icon" />
+          <span>Photos</span>
+        </button>
 
-        {/* Filter: Favorites */}
-        <div
-          className={`highlight-item ${currentFilter === 'favorites' ? 'active-filter' : ''}`}
-          onClick={() => onSelectFilter('favorites')}
-          role="button"
-          tabIndex={0}
+        <button
+          className={`cat-pill ${currentFilter === 'notes' ? 'active' : ''}`}
+          onClick={() => handleFilterClick('notes')}
         >
-          <div className="highlight-ring">
-            <Heart size={16} strokeWidth={1.5} />
-          </div>
-          <span className="highlight-label">Favoris</span>
-        </div>
+          <PenTool size={13} className="cat-icon" />
+          <span>Pensées</span>
+        </button>
+
+        {hasFavorites && (
+          <button
+            className={`cat-pill ${currentFilter === 'favorites' ? 'active' : ''}`}
+            onClick={() => handleFilterClick('favorites')}
+          >
+            <Heart size={13} className="cat-icon text-red" fill="#ff1e27" />
+            <span>Favoris</span>
+          </button>
+        )}
       </div>
     </div>
   );
