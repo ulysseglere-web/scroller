@@ -386,20 +386,9 @@
 }
 
 /* ============================================================ */
-/* FLOATING ISLAND NAVIGATION DOCK (MOBILE)                     */
+/* REGULAR INSTAGRAM MOBILE BOTTOM DOCK                         */
+/* 5 items, strictly 20% width each, perfectly aligned          */
 /* ============================================================ */
-.mobile-floating-dock-container {
-  display: flex;
-  position: fixed;
-  bottom: 18px;
-  left: 0;
-  width: 100%;
-  justify-content: center;
-  z-index: 150;
-  pointer-events: none;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
 .insta-bottom-bar-wrap {
   position: fixed;
   bottom: 0;
@@ -411,115 +400,59 @@
   -webkit-backdrop-filter: blur(24px);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-sizing: content-box;
+}
+
+@media (min-width: 768px) {
+  .insta-bottom-bar-wrap {
+    display: none !important;
+  }
 }
 
 .insta-bottom-bar {
   width: 100%;
-  max-width: 630px;
+  max-width: 540px;
   margin: 0 auto;
   height: 50px;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   align-items: center;
-  justify-content: space-around;
-  padding: 0 10px;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  border-radius: 0;
-}
-
-.insta-bottom-bar .dock-item {
-  color: #ffffff;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.15s ease;
-  height: auto;
-  border-radius: 0;
-}
-
-.insta-bottom-bar .dock-item:active {
-  transform: scale(0.9);
-}
-
-.insta-bottom-bar .dock-create-btn {
-  background: transparent;
-  color: #ffffff;
-  box-shadow: none;
-  height: auto;
-  border-radius: 0;
-}
-
-@media (min-width: 768px) {
-  .mobile-floating-dock-container {
-    display: none;
-  }
-}
-
-.mobile-floating-dock {
-  pointer-events: auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: calc(100% - 32px);
-  max-width: 360px;
-  height: 58px;
-  padding: 0 10px;
-  background: rgba(14, 14, 18, 0.82);
-  backdrop-filter: blur(28px) saturate(190%);
-  -webkit-backdrop-filter: blur(28px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-pill);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-
-[data-theme="light"] .mobile-floating-dock {
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.12);
+  justify-items: center;
+  padding: 0;
 }
 
 .dock-item {
-  flex: 1;
-  height: 44px;
+  width: 100%;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-tertiary);
-  position: relative;
-  border-radius: var(--radius-pill);
+  color: #71717a;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transition: color 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .dock-item.active {
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
-.dock-active-glow {
-  position: absolute;
-  bottom: 4px;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--text-primary);
+.dock-item:active {
+  transform: scale(0.9);
 }
 
-.dock-create-btn {
-  flex: 0 0 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: var(--accent-primary);
-  color: var(--accent-inverted);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-}
-
-.dock-create-inner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.dock-item.dock-create-btn {
+  color: #ffffff;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .dock-avatar-wrap {
@@ -528,16 +461,22 @@
   border-radius: 50%;
   overflow: hidden;
   border: 1.5px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s ease;
 }
 
 .dock-avatar-wrap.ring-active {
-  border-color: var(--text-primary);
+  border-color: #ffffff;
 }
 
-.dock-avatar-wrap img {
+.dock-avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
 /* ============================================================ */

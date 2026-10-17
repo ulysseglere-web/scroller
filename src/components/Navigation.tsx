@@ -118,9 +118,9 @@ export const Navigation: React.FC<NavigationProps> = ({
         </div>
       </aside>
 
-      {/* Barre de navigation basse Mobile (< 768px) - 5 icônes pures comme Instagram */}
-      <div className="mobile-floating-dock-container insta-bottom-bar-wrap">
-        <nav className="mobile-floating-dock insta-bottom-bar">
+      {/* Barre de navigation basse Mobile (< 768px) - 5 icônes pures et parfaitement régulières */}
+      <nav className="insta-bottom-bar-wrap" aria-label="Navigation mobile">
+        <div className="insta-bottom-bar">
           <button
             className={`dock-item ${activeTab === 'home' ? 'active' : ''}`}
             onClick={() => handleTabClick('home')}
@@ -142,7 +142,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={handleCreateClick}
             aria-label="Créer"
           >
-            <PlusSquare size={26} strokeWidth={1.8} />
+            <PlusSquare size={24} strokeWidth={1.8} />
           </button>
 
           <button
@@ -162,11 +162,12 @@ export const Navigation: React.FC<NavigationProps> = ({
               <img
                 src={profile.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100'}
                 alt={profile.displayName}
+                className="dock-avatar-img"
               />
             </div>
           </button>
-        </nav>
-      </div>
+        </div>
+      </nav>
     </>
   );
 };
