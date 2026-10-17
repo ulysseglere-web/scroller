@@ -250,8 +250,8 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
       {/* 1. Header Minimaliste & Prestigieux */}
       <header className="classe-navbar">
         <div className="classe-brand">
-          <img src="/logo.png" alt="SCROLLER" className="classe-logo-img" />
-          <span className="classe-brand-name">SCROLLER</span>
+          <img src="/logo.png" alt="ANTISOCIAL" className="classe-logo-img" />
+          <span className="classe-brand-name">ANTISOCIAL</span>
         </div>
 
         <div className="classe-nav-meta">
@@ -300,7 +300,7 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
             </h1>
 
             <p className="classe-manifesto">
-              SCROLLER réinvente l'élégance des flux visuels pour un usage strictement intime.
+              ANTISOCIAL réinvente l'élégance des flux visuels pour un usage strictement intime.
               Vos clichés, carrousels et vidéos s'expriment en plein écran haute définition.
               Inscription par email sécurisée, sans algorithme, sans publicité et sans regard extérieur.
             </p>
@@ -398,7 +398,7 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
 
                     {/* Pseudo */}
                     <div className="classe-input-group">
-                      <label htmlFor="reg-pseudo">Pseudo Scroller</label>
+                      <label htmlFor="reg-pseudo">Pseudo Antisocial</label>
                       <div className="classe-field-box">
                         <span className="prefix">@</span>
                         <input
@@ -489,7 +489,7 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
                       <div className="dispatch-top-row">
                         <div className="dispatch-sender">
                           <Mail size={13} />
-                          <span>Sécurité SCROLLER</span>
+                          <span>Sécurité ANTISOCIAL</span>
                         </div>
                         <span className="dispatch-tag">À l'instant</span>
                       </div>
@@ -693,8 +693,8 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
                   {/* Top Bar de l'application */}
                   <div className="app-top-bar">
                     <div className="app-brand-lockup">
-                      <img src="/logo.png" alt="SCROLLER" className="app-logo-mini" />
-                      <span className="app-title-text">SCROLLER</span>
+                      <img src="/logo.png" alt="ANTISOCIAL" className="app-logo-mini" />
+                      <span className="app-title-text">ANTISOCIAL</span>
                     </div>
                     <span className="app-vault-badge">LOCAL</span>
                   </div>
@@ -724,7 +724,7 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
                       >
                         <img 
                           src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1080&q=85" 
-                          alt="Cliché Scroller" 
+                          alt="Cliché Antisocial" 
                           className="app-post-img"
                         />
                         <div className="app-post-scrim" />
@@ -783,7 +783,7 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
           </div>
         </section>
 
-        {/* 3. Les 3 Principes Fondateurs de Scroller */}
+        {/* 3. Les 3 Principes Fondateurs d'Antisocial */}
         <section className="classe-triad-section">
           <div className="triad-item">
             <span className="triad-num">01</span>
@@ -808,8 +808,8 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
       {/* 4. Footer discret & noble */}
       <footer className="classe-site-footer">
         <div className="footer-left-wrap">
-          <img src="/logo.png" alt="Scroller" className="footer-logo-tiny" />
-          <span className="footer-tagline">SCROLLER — The social media where you're alone.</span>
+          <img src="/logo.png" alt="Antisocial" className="footer-logo-tiny" />
+          <span className="footer-tagline">ANTISOCIAL — The social media where you're alone.</span>
         </div>
         <span className="footer-right-tech">Souveraineté des données · Hors-ligne</span>
       </footer>

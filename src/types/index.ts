@@ -72,4 +72,5 @@ export type NavTab = 'home' | 'search' | 'reels' | 'create' | 'archive' | 'profi
 
 export type FeedFilter = 'all' | 'favorites' | 'photos' | 'videos' | 'reels' | 'notes' | 'quotes' | 'links';
 
-export const SCROLLER_VERSION = '2.0.0';
+export const ANTISOCIAL_VERSION = '2.0.0';
+export const SCROLLER_VERSION = ANTISOCIAL_VERSION;

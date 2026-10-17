@@ -1,32 +1,28 @@
-# React + TypeScript + Vite
+# ANTISOCIAL
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+> **The social media where you're alone.**  
+> Un sanctuaire privé et confidentiel pour immortaliser vos clichés (format immersif 4:5), vidéos verticales (9:16), carrousels et notes intimes.  
+> Aucun algorithme, aucune publicité, zéro abonné, zéro regard extérieur. 100% hors-ligne et souverain.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Fonctionnalités Clés
 
-## React Compiler
+- **Inscription & Connexion par E-mail** : Flux sécurisé avec validation par code à 6 chiffres et authentification locale confidentielle.
+- **Formats Visuels Immersion Totale** : Rendu plein écran optimisé mobile (4:5, 9:16).
+- **Architecture 100% Locale (Souveraineté Totale)** : Données chiffrées en base locale IndexedDB sans envoi de vos clichés sur des serveurs tiers.
+- **Export & Sauvegarde JSON** : Import / Export complet de vos archives en un clic.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the Oxlint configuration
+## Démarrage Rapide
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Déploiement en production :
+```bash
+npm run deploy
+```

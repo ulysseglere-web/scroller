@@ -231,7 +231,7 @@ export const App: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `scroller_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `antisocial_backup_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -300,8 +300,8 @@ export const App: React.FC = () => {
   if (!isLoaded) {
     return (
       <div className="auth-loading-screen">
-        <img src="/logo.png" alt="SCROLLER" className="loading-logo" />
-        <span className="loading-wordmark">SCROLLER</span>
+        <img src="/logo.png" alt="ANTISOCIAL" className="loading-logo" />
+        <span className="loading-wordmark">ANTISOCIAL</span>
       </div>
     );
   }

@@ -174,7 +174,7 @@ export async function exportAllData(): Promise<string> {
   const profile = await getStoredProfile();
   const payload = {
     version: 2,
-    appName: 'SCROLLER',
+    appName: 'ANTISOCIAL',
     exportedAt: new Date().toISOString(),
     profile,
     posts,

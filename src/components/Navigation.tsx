@@ -39,8 +39,8 @@ export const Navigation: React.FC<NavigationProps> = ({
         <div className="sidebar-top">
           <div className="sidebar-brand" onClick={() => handleTabClick('home')}>
             <div className="sidebar-logo-row">
-              <img src="/logo.png" alt="SCROLLER" className="sidebar-brand-logo" />
-              <span className="brand-wordmark">SCROLLER</span>
+              <img src="/logo.png" alt="ANTISOCIAL" className="sidebar-brand-logo" />
+              <span className="brand-wordmark">ANTISOCIAL</span>
               <span className="status-indicator-dot" />
             </div>
             <span className="sidebar-sub">The social media where you're alone.</span>

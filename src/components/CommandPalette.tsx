@@ -268,7 +268,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             <span><kbd>↵</kbd> Choisir</span>
             <span><kbd>ESC</kbd> Fermer</span>
           </div>
-          <span className="cmd-footer-badge">SCROLLER // SOLO MODE</span>
+          <span className="cmd-footer-badge">ANTISOCIAL // SOLO MODE</span>
         </div>
       </div>
     </div>

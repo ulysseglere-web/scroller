@@ -104,11 +104,11 @@ export const PostCard: React.FC<PostCardProps> = ({
   };
 
   const handleShare = async () => {
-    const shareText = `${post.caption || 'Un souvenir de mon journal SCROLLER'}\n— ${post.quoteData ? post.quoteData.quote : ''}`;
+    const shareText = `${post.caption || 'Un souvenir de mon journal ANTISOCIAL'}\n— ${post.quoteData ? post.quoteData.quote : ''}`;
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'SCROLLER — Souvenir privé',
+          title: 'ANTISOCIAL — Souvenir privé',
           text: shareText,
           url: window.location.href,
         });

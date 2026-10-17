@@ -28,8 +28,8 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="app-header">
       <div className="header-left">
         <div className="brand-group">
-          <img src="/logo.png" alt="SCROLLER" className="brand-app-logo" />
-          <span className="brand-wordmark">SCROLLER</span>
+          <img src="/logo.png" alt="ANTISOCIAL" className="brand-app-logo" />
+          <span className="brand-wordmark">ANTISOCIAL</span>
           <div className="status-live-pill" title="Réseau privé · 100% Hors-ligne">
             <span className="pulse-dot" />
             <span className="pill-text">SOLO</span>

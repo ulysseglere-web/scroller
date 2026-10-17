@@ -519,7 +519,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <Upload size={20} />
             <div>
               <div className="setting-name">Restaurer une sauvegarde</div>
-              <div className="setting-desc">Importer un fichier scroller_backup.json</div>
+              <div className="setting-desc">Importer un fichier antisocial_backup.json</div>
             </div>
           </div>
           <label className="setting-action-btn upload-label-btn">

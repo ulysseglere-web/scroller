@@ -313,7 +313,7 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
                   className="reel-action-btn"
                   onClick={() => {
                     if (navigator.share) {
-                      navigator.share({ title: 'Reel SCROLLER', text: reel.caption, url: window.location.href });
+                      navigator.share({ title: 'Reel ANTISOCIAL', text: reel.caption, url: window.location.href });
                     }
                   }}
                   aria-label="Partager"
