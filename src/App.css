@@ -7032,6 +7032,301 @@
   box-shadow: 0 14px 30px -5px rgba(255, 30, 39, 0.6);
 }
 
+/* ============================================================ */
+/* INSTAGRAM STORY CAMERA MODAL (DIRECT LIVE VIEWFINDER)        */
+/* ============================================================ */
+.story-camera-modal-root {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  background: #000000;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+  animation: fadeInCamera 0.22s ease-out;
+}
+
+@keyframes fadeInCamera {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.story-viewfinder-screen,
+.story-preview-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #000000;
+  overflow: hidden;
+}
+
+.story-live-video,
+.story-preview-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.story-live-video.mirrored {
+  transform: scaleX(-1);
+}
+
+/* Top bar controls */
+.story-camera-top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 16px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 30;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+}
+
+.story-camera-icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.story-camera-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.08);
+}
+
+.story-recording-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 30, 39, 0.9);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(255, 30, 39, 0.5);
+}
+
+.recording-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: pulseRec 1s infinite;
+}
+
+@keyframes pulseRec {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+/* Bottom Bar Shutter */
+.story-camera-bottom-bar {
+  position: absolute;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 24px;
+  z-index: 30;
+}
+
+.story-gallery-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.story-gallery-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.08);
+}
+
+/* Iconique Shutter Instagram */
+.story-shutter-outer-ring {
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.story-shutter-inner-btn {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.story-shutter-inner-btn:active {
+  transform: scale(0.88);
+}
+
+.story-shutter-inner-btn.recording {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #ff1e27;
+  animation: pulseRecording 1s infinite ease-in-out;
+}
+
+@keyframes pulseRecording {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.story-shutter-hint {
+  position: absolute;
+  bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  width: 100%;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  z-index: 30;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* Fallback Card if permission denied */
+.story-camera-fallback-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(18, 18, 20, 0.94);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  width: 88%;
+  max-width: 340px;
+  z-index: 25;
+}
+
+.story-camera-fallback-card p {
+  font-size: 13.5px;
+  color: #e4e4e7;
+  margin-bottom: 16px;
+  line-height: 1.45;
+}
+
+.btn-trigger-native-cam {
+  background: #ff1e27;
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  padding: 11px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Preview & Publish Screen */
+.story-caption-overlay {
+  position: absolute;
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  left: 16px;
+  right: 16px;
+  z-index: 40;
+}
+
+.story-caption-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  color: #ffffff;
+  padding: 12px 20px;
+  font-size: 14px;
+  outline: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.story-caption-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.story-preview-bottom-bar {
+  position: absolute;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  right: 16px;
+  z-index: 40;
+}
+
+.btn-story-publish-direct {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  color: #000000;
+  border: none;
+  border-radius: 9999px;
+  padding: 10px 18px 10px 12px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7);
+  transition: transform 0.15s ease;
+}
+
+.btn-story-publish-direct:active {
+  transform: scale(0.96);
+}
+
+.user-story-bubble-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1.5px solid #ff1e27;
+}
+
+.user-story-bubble-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 
 
 

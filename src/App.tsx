@@ -20,6 +20,7 @@ import { QuickCaptureBar } from './components/QuickCaptureBar';
 import { PostCard } from './components/PostCard';
 import { ReelsFeed } from './components/ReelsFeed';
 import { StoryViewerModal } from './components/StoryViewerModal';
+import { StoryCameraModal } from './components/StoryCameraModal';
 import { CreateModal } from './components/CreateModal';
 import { MediaViewerModal } from './components/MediaViewerModal';
 import { SearchScreen } from './components/SearchScreen';
@@ -57,6 +58,7 @@ export const App: React.FC = () => {
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isStoryCameraOpen, setIsStoryCameraOpen] = useState(false);
   const [preloadedFiles, setPreloadedFiles] = useState<string[]>([]);
   const [createInitialMode, setCreateInitialMode] = useState<'media' | 'note'>('media');
   const directFileInputRef = useRef<HTMLInputElement>(null);
@@ -384,6 +386,11 @@ export const App: React.FC = () => {
   };
 
   // Zero-friction capture handlers
+  const handleOpenStoryCamera = () => {
+    sound.playPop();
+    setIsStoryCameraOpen(true);
+  };
+
   const handleDirectMediaClick = () => {
     if (directFileInputRef.current) {
       directFileInputRef.current.click();
@@ -609,7 +616,7 @@ export const App: React.FC = () => {
             <HighlightsBar
               currentFilter={feedFilter}
               onSelectFilter={setFeedFilter}
-              onOpenCreate={handleDirectMediaClick}
+              onOpenCreate={handleOpenStoryCamera}
               onOpenRandomMemory={handleOpenRandomMemory}
               hasFavorites={hasFavorites}
               profile={profile}
@@ -621,7 +628,7 @@ export const App: React.FC = () => {
             <QuickCaptureBar
               profile={profile}
               onSubmitText={handleQuickSaveNote}
-              onDirectMediaClick={handleDirectMediaClick}
+              onDirectMediaClick={handleOpenStoryCamera}
             />
 
             {/* Posts Feed */}
@@ -730,6 +737,16 @@ export const App: React.FC = () => {
           onSavePost={handleSaveNewPost}
           initialFiles={preloadedFiles}
           initialMode={createInitialMode}
+        />
+      )}
+
+      {/* Instagram Story Live Camera Modal */}
+      {isStoryCameraOpen && (
+        <StoryCameraModal
+          isOpen={isStoryCameraOpen}
+          onClose={() => setIsStoryCameraOpen(false)}
+          onSavePost={handleSaveNewPost}
+          profile={profile}
         />
       )}
 
