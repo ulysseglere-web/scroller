@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Compass, Plus, Archive, Moon, Sun, Film, Sparkles } from 'lucide-react';
+import { Home, Compass, PlusSquare, Archive, Moon, Sun, Film } from 'lucide-react';
 import type { NavTab, UserProfile } from '../types';
 import { sound } from '../services/sound';
 
@@ -34,16 +34,14 @@ export const Navigation: React.FC<NavigationProps> = ({
 
   return (
     <>
-      {/* Desktop Sidebar (>= 768px) */}
-      <aside className="desktop-sidebar">
+      {/* Desktop Sidebar (>= 768px) - Épurée style Instagram */}
+      <aside className="desktop-sidebar insta-sidebar">
         <div className="sidebar-top">
           <div className="sidebar-brand" onClick={() => handleTabClick('home')}>
             <div className="sidebar-logo-row">
               <img src="/logo.png" alt="ANTISOCIAL" className="sidebar-brand-logo" />
               <span className="brand-wordmark">ANTISOCIAL</span>
-              <span className="status-indicator-dot" />
             </div>
-            <span className="sidebar-sub">The social media where you're alone.</span>
           </div>
         </div>
 
@@ -53,18 +51,17 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={() => handleTabClick('home')}
             aria-label="Fil d'actualité"
           >
-            <Home size={19} strokeWidth={activeTab === 'home' ? 2.2 : 1.6} />
-            <span className="nav-label">Flux</span>
+            <Home size={22} strokeWidth={activeTab === 'home' ? 2.4 : 1.8} />
+            <span className="nav-label">Accueil</span>
           </button>
 
           <button
             className={`sidebar-nav-item ${activeTab === 'reels' ? 'active' : ''}`}
             onClick={() => handleTabClick('reels')}
-            aria-label="Reels & Vidéos courtes"
+            aria-label="Reels"
           >
-            <Film size={19} strokeWidth={activeTab === 'reels' ? 2.2 : 1.6} />
+            <Film size={22} strokeWidth={activeTab === 'reels' ? 2.4 : 1.8} />
             <span className="nav-label">Reels</span>
-            <span className="reels-live-pill">9:16</span>
           </button>
 
           <button
@@ -72,17 +69,17 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={() => handleTabClick('search')}
             aria-label="Explorer"
           >
-            <Compass size={19} strokeWidth={activeTab === 'search' ? 2.2 : 1.6} />
+            <Compass size={22} strokeWidth={activeTab === 'search' ? 2.4 : 1.8} />
             <span className="nav-label">Explorer</span>
           </button>
 
           <button
             className="sidebar-nav-item create-action-item"
             onClick={handleCreateClick}
-            aria-label="Capturer"
+            aria-label="Créer"
           >
-            <Plus size={19} strokeWidth={2.2} />
-            <span className="nav-label">Capturer</span>
+            <PlusSquare size={22} strokeWidth={1.8} />
+            <span className="nav-label">Créer</span>
           </button>
 
           <button
@@ -90,7 +87,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={() => handleTabClick('archive')}
             aria-label="Archives"
           >
-            <Archive size={19} strokeWidth={activeTab === 'archive' ? 2.2 : 1.6} />
+            <Archive size={22} strokeWidth={activeTab === 'archive' ? 2.4 : 1.8} />
             <span className="nav-label">Archives</span>
             {archivedCount > 0 && (
               <span className="sidebar-badge">{archivedCount}</span>
@@ -114,56 +111,22 @@ export const Navigation: React.FC<NavigationProps> = ({
         </nav>
 
         <div className="sidebar-bottom">
-          <div className="sidebar-alone-card">
-            <Sparkles size={14} className="alone-sparkle" />
-            <div className="alone-text">
-              <span className="alone-title">Réseau privé</span>
-              <span className="alone-sub">Zéro follower. Zéro pression.</span>
-            </div>
-          </div>
-
           <button className="sidebar-theme-toggle" onClick={() => { sound.playTap(); onToggleTheme(); }}>
-            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+            {theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}
             <span>{theme === 'dark' ? 'Mode clair' : 'Mode sombre'}</span>
-          </button>
-
-          <button className="desktop-create-btn" onClick={handleCreateClick}>
-            <Plus size={16} strokeWidth={2.5} />
-            <span>Nouveau souvenir</span>
           </button>
         </div>
       </aside>
 
-      {/* Floating Island Navigation Dock for Mobile (< 768px) */}
-      <div className="mobile-floating-dock-container">
-        <nav className="mobile-floating-dock">
+      {/* Barre de navigation basse Mobile (< 768px) - 5 icônes pures comme Instagram */}
+      <div className="mobile-floating-dock-container insta-bottom-bar-wrap">
+        <nav className="mobile-floating-dock insta-bottom-bar">
           <button
             className={`dock-item ${activeTab === 'home' ? 'active' : ''}`}
             onClick={() => handleTabClick('home')}
-            aria-label="Flux"
+            aria-label="Accueil"
           >
-            <Home size={22} strokeWidth={activeTab === 'home' ? 2.4 : 1.6} />
-            {activeTab === 'home' && <span className="dock-active-glow" />}
-          </button>
-
-          <button
-            className={`dock-item ${activeTab === 'reels' ? 'active' : ''}`}
-            onClick={() => handleTabClick('reels')}
-            aria-label="Reels"
-          >
-            <Film size={22} strokeWidth={activeTab === 'reels' ? 2.4 : 1.6} />
-            {activeTab === 'reels' && <span className="dock-active-glow" />}
-          </button>
-
-          {/* Central Capture Button */}
-          <button
-            className="dock-item dock-create-btn"
-            onClick={handleCreateClick}
-            aria-label="Créer"
-          >
-            <div className="dock-create-inner">
-              <Plus size={22} strokeWidth={2.5} />
-            </div>
+            <Home size={24} strokeWidth={activeTab === 'home' ? 2.4 : 1.7} />
           </button>
 
           <button
@@ -171,8 +134,23 @@ export const Navigation: React.FC<NavigationProps> = ({
             onClick={() => handleTabClick('search')}
             aria-label="Explorer"
           >
-            <Compass size={22} strokeWidth={activeTab === 'search' ? 2.4 : 1.6} />
-            {activeTab === 'search' && <span className="dock-active-glow" />}
+            <Compass size={24} strokeWidth={activeTab === 'search' ? 2.4 : 1.7} />
+          </button>
+
+          <button
+            className="dock-item dock-create-btn"
+            onClick={handleCreateClick}
+            aria-label="Créer"
+          >
+            <PlusSquare size={26} strokeWidth={1.8} />
+          </button>
+
+          <button
+            className={`dock-item ${activeTab === 'reels' ? 'active' : ''}`}
+            onClick={() => handleTabClick('reels')}
+            aria-label="Reels"
+          >
+            <Film size={24} strokeWidth={activeTab === 'reels' ? 2.4 : 1.7} />
           </button>
 
           <button

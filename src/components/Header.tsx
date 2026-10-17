@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Moon, Sun, Sparkles, Command, Volume2, VolumeX } from 'lucide-react';
+import { Moon, Sun, Volume2, VolumeX, Sparkles } from 'lucide-react';
 import { sound } from '../services/sound';
 
 interface HeaderProps {
@@ -15,7 +15,6 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTheme,
   onOpenRandomMemory,
   totalPostsCount,
-  onOpenCmd,
 }) => {
   const [soundEnabled, setSoundEnabled] = useState(sound.getEnabled());
 
@@ -25,61 +24,43 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="app-header">
+    <header className="app-header insta-clean-header">
       <div className="header-left">
         <div className="brand-group">
           <img src="/logo.png" alt="ANTISOCIAL" className="brand-app-logo" />
           <span className="brand-wordmark">ANTISOCIAL</span>
-          <div className="status-live-pill" title="Réseau privé · 100% Hors-ligne">
-            <span className="pulse-dot" />
-            <span className="pill-text">SOLO</span>
-          </div>
         </div>
       </div>
 
       <div className="header-actions">
-        {/* Quick Command Palette Button */}
-        <button 
-          className="header-cmd-pill"
-          onClick={() => {
-            sound.playPop();
-            onOpenCmd();
-          }}
-          title="Rechercher ou commander (⌘K / Ctrl+K)"
-          aria-label="Recherche"
-        >
-          <Command size={13} />
-          <span className="cmd-pill-key">⌘K</span>
-        </button>
-
-        {/* Resurface Flashback */}
+        {/* Flashback Souvenir aléatoire */}
         {totalPostsCount > 0 && (
           <button 
-            className="header-glass-btn" 
+            className="header-icon-btn" 
             onClick={() => {
               sound.playTap();
               onOpenRandomMemory();
             }}
             title="Souvenir au hasard"
-            aria-label="Écho"
+            aria-label="Flashback"
           >
-            <Sparkles size={16} strokeWidth={1.8} className="sparkle-icon" />
+            <Sparkles size={20} strokeWidth={1.8} />
           </button>
         )}
 
         {/* Audio FX toggle */}
         <button
-          className="header-glass-btn"
+          className="header-icon-btn"
           onClick={handleToggleSound}
-          title={soundEnabled ? 'Effets sonores actifs' : 'Effets sonores muets'}
+          title={soundEnabled ? 'Sons actifs' : 'Sons muets'}
           aria-label="Sons"
         >
-          {soundEnabled ? <Volume2 size={16} strokeWidth={1.8} /> : <VolumeX size={16} strokeWidth={1.8} />}
+          {soundEnabled ? <Volume2 size={20} strokeWidth={1.8} /> : <VolumeX size={20} strokeWidth={1.8} />}
         </button>
 
         {/* Theme Toggle */}
         <button 
-          className="header-glass-btn" 
+          className="header-icon-btn" 
           onClick={() => {
             sound.playTap();
             onToggleTheme();
@@ -88,9 +69,9 @@ export const Header: React.FC<HeaderProps> = ({
           aria-label="Thème"
         >
           {theme === 'dark' ? (
-            <Sun size={16} strokeWidth={1.8} />
+            <Sun size={20} strokeWidth={1.8} />
           ) : (
-            <Moon size={16} strokeWidth={1.8} />
+            <Moon size={20} strokeWidth={1.8} />
           )}
         </button>
       </div>

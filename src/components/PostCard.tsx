@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { 
   Heart, 
-  MessageSquare, 
+  MessageCircle, 
   Bookmark, 
-  Share2, 
+  Send, 
   MoreHorizontal, 
   Pin, 
   Volume2, 
@@ -13,7 +13,6 @@ import {
   ChevronRight, 
   ExternalLink, 
   BookOpen, 
-  MapPin, 
   Calendar,
   Check,
   Edit3,
@@ -122,21 +121,9 @@ export const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
-  const getTypeLabel = () => {
-    switch (post.type) {
-      case 'carousel': return 'Photos';
-      case 'photo': return 'Photo';
-      case 'video': return 'Vidéo';
-      case 'note': return 'Pensée';
-      case 'quote': return 'Citation';
-      case 'link': return 'Lien';
-      default: return 'Souvenir';
-    }
-  };
-
   return (
     <article className={`post-card ${post.isPinned ? 'is-pinned' : ''}`}>
-      {/* Post Header */}
+      {/* Post Header (Instagram style) */}
       <div className="post-header">
         <div className="post-author-row">
           <div className="author-avatar-wrap">
@@ -150,21 +137,16 @@ export const PostCard: React.FC<PostCardProps> = ({
             <div className="author-name-line">
               <span className="post-author-name">{profile.username}</span>
               {post.isPinned && (
-                <span className="pinned-badge" title="Épinglé en tête de fil">
-                  <Pin size={12} className="pin-icon" />
+                <span className="pinned-badge" title="Épinglé">
+                  <Pin size={11} className="pin-icon" />
                 </span>
               )}
               <span className="meta-dot">·</span>
               <span className="post-time">{formattedDate}</span>
             </div>
-            <div className="post-sub-line">
-              <span className="post-type-tag">{getTypeLabel()}</span>
-              {post.location && (
-                <span className="post-location">
-                  <MapPin size={11} /> {post.location}
-                </span>
-              )}
-            </div>
+            {post.location && (
+              <span className="post-location">{post.location}</span>
+            )}
           </div>
         </div>
 
@@ -189,7 +171,7 @@ export const PostCard: React.FC<PostCardProps> = ({
                 <Archive size={16} /> Archiver ce souvenir
               </button>
               <button onClick={handleShare}>
-                {copiedLink ? <Check size={16} /> : <Share2 size={16} />} 
+                {copiedLink ? <Check size={16} /> : <Send size={16} />} 
                 {copiedLink ? 'Copié dans le presse-papier' : 'Copier / Partager'}
               </button>
               <div className="menu-divider" />
@@ -386,18 +368,18 @@ export const PostCard: React.FC<PostCardProps> = ({
         )}
       </div>
 
-      {/* Post Action Buttons Bar */}
+      {/* Post Action Buttons Bar (Instagram Style) */}
       <div className="post-actions-bar">
         <div className="actions-left">
           <button
             className={`action-btn ${post.isFavorite ? 'favorited' : ''}`}
             onClick={() => onToggleFavorite(post.id)}
-            title={post.isFavorite ? 'Retirer des favoris' : 'Ajouter à mes favoris'}
-            aria-label="Favori"
+            title={post.isFavorite ? "Je n'aime plus" : "J'aime"}
+            aria-label="J'aime"
           >
             <Heart 
               size={24} 
-              strokeWidth={post.isFavorite ? 0 : 2} 
+              strokeWidth={post.isFavorite ? 0 : 1.8} 
               fill={post.isFavorite ? '#ff1e27' : 'none'} 
               color={post.isFavorite ? '#ff1e27' : 'currentColor'}
             />
@@ -406,19 +388,19 @@ export const PostCard: React.FC<PostCardProps> = ({
           <button
             className={`action-btn ${post.privateAnnotation ? 'annotated' : ''}`}
             onClick={() => setShowAnnotationInput(!showAnnotationInput)}
-            title="Note privée sur ce souvenir"
-            aria-label="Annotation personnelle"
+            title="Note privée"
+            aria-label="Commenter / Note intime"
           >
-            <MessageSquare size={23} strokeWidth={2} />
+            <MessageCircle size={24} strokeWidth={1.8} />
           </button>
 
           <button
             className="action-btn"
             onClick={handleShare}
-            title="Partager ou copier"
+            title="Partager"
             aria-label="Partager"
           >
-            <Share2 size={23} strokeWidth={2} />
+            <Send size={22} strokeWidth={1.8} />
           </button>
         </div>
 
@@ -426,12 +408,19 @@ export const PostCard: React.FC<PostCardProps> = ({
           <button
             className="action-btn"
             onClick={() => onArchive(post.id)}
-            title="Archiver ce souvenir"
-            aria-label="Archiver"
+            title="Enregistrer"
+            aria-label="Enregistrer"
           >
-            <Bookmark size={23} strokeWidth={2} />
+            <Bookmark size={23} strokeWidth={1.8} />
           </button>
         </div>
+      </div>
+
+      {/* Likes count (Instagram) */}
+      <div className="post-likes-line">
+        <span className="likes-bold">
+          {post.isFavorite ? '1 mention J’aime' : '0 mention J’aime'}
+        </span>
       </div>
 
       {/* Caption & Annotation Section */}
@@ -452,21 +441,20 @@ export const PostCard: React.FC<PostCardProps> = ({
                 {isExpanded ? ' moins' : ' plus'}
               </button>
             )}
-          </div>
-        )}
-
-        {/* Tags */}
-        {post.tags && post.tags.length > 0 && (
-          <div className="post-tags-row">
-            {post.tags.map((tag) => (
-              <button
-                key={tag}
-                className="tag-chip"
-                onClick={() => onTagClick && onTagClick(tag)}
-              >
-                #{tag}
-              </button>
-            ))}
+            {post.tags && post.tags.length > 0 && (
+              <span className="inline-post-tags">
+                {' '}
+                {post.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="tag-inline-text"
+                    onClick={() => onTagClick && onTagClick(tag)}
+                  >
+                    #{tag}{' '}
+                  </span>
+                ))}
+              </span>
+            )}
           </div>
         )}
 

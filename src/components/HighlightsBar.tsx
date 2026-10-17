@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Film, Image, PenTool, Heart, Sparkles } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import type { FeedFilter, UserProfile, StoryHighlight } from '../types';
 import { sound } from '../services/sound';
 
@@ -15,23 +15,15 @@ interface HighlightsBarProps {
 }
 
 export const HighlightsBar: React.FC<HighlightsBarProps> = ({
-  currentFilter,
-  onSelectFilter,
   onOpenCreate,
   onOpenRandomMemory,
-  hasFavorites,
   profile,
   highlights,
   onOpenStory,
 }) => {
-  const handleFilterClick = (filter: FeedFilter) => {
-    sound.playTap();
-    onSelectFilter(filter);
-  };
-
   return (
-    <div className="stories-and-filters-container">
-      {/* 1. Real Instagram Stories Tray */}
+    <div className="stories-and-filters-container insta-stories-only">
+      {/* Instagram Stories Tray */}
       <div className="stories-tray-scroll">
         {/* Your Story (+) */}
         <div 
@@ -42,7 +34,7 @@ export const HighlightsBar: React.FC<HighlightsBarProps> = ({
           }}
           role="button"
           tabIndex={0}
-          title="Ajouter un souvenir"
+          title="Ajouter à ma story"
         >
           <div className="story-avatar-wrapper add-story">
             <img 
@@ -51,7 +43,7 @@ export const HighlightsBar: React.FC<HighlightsBarProps> = ({
               className="story-avatar-img"
             />
             <div className="story-plus-badge">
-              <Plus size={11} strokeWidth={3} />
+              <Plus size={12} strokeWidth={3} />
             </div>
           </div>
           <span className="story-label">Votre story</span>
@@ -95,50 +87,6 @@ export const HighlightsBar: React.FC<HighlightsBarProps> = ({
           </div>
           <span className="story-label">Écho</span>
         </div>
-      </div>
-
-      {/* 2. Sleek Filter Pills Bar (Threads / Instagram Style) */}
-      <div className="feed-category-pills">
-        <button
-          className={`cat-pill ${currentFilter === 'all' ? 'active' : ''}`}
-          onClick={() => handleFilterClick('all')}
-        >
-          Tout
-        </button>
-
-        <button
-          className={`cat-pill ${currentFilter === 'reels' ? 'active' : ''}`}
-          onClick={() => handleFilterClick('reels')}
-        >
-          <Film size={13} className="cat-icon" />
-          <span>Reels</span>
-        </button>
-
-        <button
-          className={`cat-pill ${currentFilter === 'photos' ? 'active' : ''}`}
-          onClick={() => handleFilterClick('photos')}
-        >
-          <Image size={13} className="cat-icon" />
-          <span>Photos</span>
-        </button>
-
-        <button
-          className={`cat-pill ${currentFilter === 'notes' ? 'active' : ''}`}
-          onClick={() => handleFilterClick('notes')}
-        >
-          <PenTool size={13} className="cat-icon" />
-          <span>Pensées</span>
-        </button>
-
-        {hasFavorites && (
-          <button
-            className={`cat-pill ${currentFilter === 'favorites' ? 'active' : ''}`}
-            onClick={() => handleFilterClick('favorites')}
-          >
-            <Heart size={13} className="cat-icon text-red" fill="#ff1e27" />
-            <span>Favoris</span>
-          </button>
-        )}
       </div>
     </div>
   );
