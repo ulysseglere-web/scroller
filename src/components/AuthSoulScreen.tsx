@@ -3,8 +3,8 @@ import {
   Lock, 
   User, 
   ArrowRight, 
+  ArrowLeft,
   Upload, 
-  KeyRound, 
   Camera, 
   Trash2,
   Heart,
@@ -12,7 +12,12 @@ import {
   Share2,
   Compass,
   PlusSquare,
-  Home
+  Home,
+  Mail,
+  ShieldCheck,
+  Check,
+  RefreshCw,
+  KeyRound
 } from 'lucide-react';
 import type { UserProfile } from '../types';
 import { sound } from '../services/sound';
@@ -38,21 +43,31 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
   const [showHeartBurst, setShowHeartBurst] = useState(false);
 
   // Register form state
+  const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const bio = 'Archives personnelles sans public.';
   const [customAvatar, setCustomAvatar] = useState<string>('');
   const [registerPassword, setRegisterPassword] = useState('');
 
+  // 2-step registration & verification
+  const [regStep, setRegStep] = useState<'details' | 'verification'>('details');
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [registerError, setRegisterError] = useState('');
+  const [resendNotice, setResendNotice] = useState(false);
+
   // Login form state
-  const [loginUsername, setLoginUsername] = useState(existingAccount ? existingAccount.username : '');
+  const [loginIdentifier, setLoginIdentifier] = useState(
+    existingAccount ? (existingAccount.email || existingAccount.username) : ''
+  );
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
   const fileInputId = useId();
 
   const getMonogram = () => {
-    const source = displayName.trim() || username.trim() || 'S';
+    const source = displayName.trim() || username.trim() || email.trim() || 'S';
     return source.charAt(0).toUpperCase();
   };
 
@@ -103,17 +118,68 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
     setCustomAvatar('');
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_.]/g, '');
-    const cleanDisplayName = displayName.trim() || cleanUsername || 'Moi';
+  const handleEmailChange = (val: string) => {
+    setEmail(val);
+    setRegisterError('');
+    // Auto-suggest pseudo from email prefix if username is empty or matches old prefix
+    const prevPrefix = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_.]/g, '');
+    const newPrefix = val.split('@')[0].toLowerCase().replace(/[^a-z0-9_.]/g, '');
+    if (!username || username === prevPrefix) {
+      setUsername(newPrefix);
+    }
+  };
 
-    if (!cleanUsername) {
-      alert('Veuillez renseigner un pseudo (ex: @solitaire).');
+  const handleInitiateRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegisterError('');
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      setRegisterError('Veuillez renseigner une adresse e-mail valide (ex: contact@domaine.com).');
       return;
     }
 
+    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_.]/g, '');
+    if (!cleanUsername) {
+      setRegisterError('Veuillez renseigner un pseudo (ex: @solitaire).');
+      return;
+    }
+
+    if (registerPassword && registerPassword.length < 6) {
+      setRegisterError('Le mot de passe doit comporter au moins 6 caractères.');
+      return;
+    }
+
+    // Generate authentic 6-digit confirmation code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedCode(code);
+    setVerificationCode('');
+    setRegStep('verification');
     sound.playPop();
+  };
+
+  const handleResendCode = () => {
+    sound.playTap();
+    const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedCode(newCode);
+    setResendNotice(true);
+    setTimeout(() => setResendNotice(false), 3500);
+  };
+
+  const handleConfirmVerification = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegisterError('');
+
+    if (verificationCode.trim() !== generatedCode.trim()) {
+      setRegisterError('Code de confirmation incorrect. Saisissez les 6 chiffres transmis.');
+      return;
+    }
+
+    sound.playChime();
+
+    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_.]/g, '');
+    const cleanDisplayName = displayName.trim() || cleanUsername || 'Moi';
 
     let finalAvatar = customAvatar;
     if (!finalAvatar) {
@@ -125,6 +191,7 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
     const newProfile: UserProfile = {
       username: cleanUsername,
       displayName: cleanDisplayName,
+      email: email.trim().toLowerCase(),
       bio: bio.trim(),
       avatarUrl: finalAvatar,
       theme: 'dark',
@@ -145,14 +212,20 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
       return;
     }
 
-    if (loginUsername.trim().toLowerCase() !== existingAccount.username.toLowerCase()) {
-      setLoginError('Pseudo introuvable sur cet appareil.');
+    const rawInput = loginIdentifier.trim().toLowerCase();
+    const cleanUsername = rawInput.replace(/^@/, '');
+
+    const matchEmail = existingAccount.email && existingAccount.email.trim().toLowerCase() === rawInput;
+    const matchUsername = existingAccount.username.trim().toLowerCase() === cleanUsername;
+
+    if (!matchEmail && !matchUsername) {
+      setLoginError('Aucun compte associé à cet e-mail ou pseudo.');
       return;
     }
 
     if (existingAccount.password && existingAccount.password.trim() !== '') {
       if (loginPassword.trim() !== existingAccount.password.trim()) {
-        setLoginError('Code secret ou mot de passe incorrect.');
+        setLoginError('Mot de passe ou code d\'accès incorrect.');
         return;
       }
     }
@@ -191,7 +264,7 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
                 document.getElementById('portal-section')?.scrollIntoView({ behavior: 'smooth' });
               }}
             >
-              <span>Accéder à mon espace (@{existingAccount.username})</span>
+              <span>Accéder à mon espace ({existingAccount.email || `@${existingAccount.username}`})</span>
               <ArrowRight size={14} />
             </button>
           ) : (
@@ -200,24 +273,25 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
               onClick={() => {
                 sound.playTap();
                 setMode('register');
+                setRegStep('details');
                 document.getElementById('portal-section')?.scrollIntoView({ behavior: 'smooth' });
               }}
             >
-              <span>Commencer</span>
+              <span>Inscription par email</span>
               <ArrowRight size={14} />
             </button>
           )}
         </div>
       </header>
 
-      {/* 2. Hero & Showcase iPhone (Deux colonnes d'élégance) */}
+      {/* 2. Hero & Showcase iPhone */}
       <main className="classe-main-content">
         <section className="classe-split-hero">
-          {/* Colonne Gauche : Présentation claire & Accès */}
+          {/* Colonne Gauche : Présentation claire & Inscription / Connexion */}
           <div className="classe-col-intro" id="portal-section">
             <div className="classe-eyebrow">
               <span className="classe-dot" />
-              <span>ESPACE PERSONNEL PRIVÉ</span>
+              <span>AUTHENTIFICATION CONFIDENTIELLE</span>
             </div>
 
             <h1 className="classe-headline">
@@ -226,9 +300,9 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
             </h1>
 
             <p className="classe-manifesto">
-              SCROLLER réinvente l'élégance des plateformes visuelles pour un usage strictement intime.
-              Vos clichés, vos carrousels et vos séquences vidéo s'expriment en plein cadre, sans compression dégradante.
-              Aucun algorithme, aucune publicité, aucun regard extérieur.
+              SCROLLER réinvente l'élégance des flux visuels pour un usage strictement intime.
+              Vos clichés, carrousels et vidéos s'expriment en plein écran haute définition.
+              Inscription par email sécurisée, sans algorithme, sans publicité et sans regard extérieur.
             </p>
 
             {/* Carte d'accès / Inscription épurée */}
@@ -240,10 +314,12 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
                   onClick={() => {
                     sound.playTap();
                     setMode('register');
+                    setRegisterError('');
                     setLoginError('');
                   }}
                 >
-                  <span>Créer mon espace</span>
+                  <Mail size={13} style={{ marginRight: 6 }} />
+                  <span>Inscription e-mail</span>
                 </button>
                 <button
                   type="button"
@@ -251,113 +327,265 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
                   onClick={() => {
                     sound.playTap();
                     setMode('login');
+                    setRegisterError('');
                     setLoginError('');
                   }}
                 >
+                  <Lock size={13} style={{ marginRight: 6 }} />
                   <span>Connexion</span>
                 </button>
               </div>
 
               {mode === 'register' ? (
-                <form className="classe-form" onSubmit={handleRegisterSubmit}>
-                  {/* Photo de profil personnalisée */}
-                  <div className="classe-avatar-picker">
-                    <div className="avatar-disc">
-                      {customAvatar ? (
-                        <div className="custom-photo-wrap">
-                          <img src={customAvatar} alt="Votre photo" />
-                          <button
-                            type="button"
-                            className="btn-trash-avatar"
-                            onClick={handleRemovePhoto}
-                            title="Supprimer"
+                regStep === 'details' ? (
+                  /* Étape 1 : Coordonnées (Email, Pseudo, Nom, Mot de passe) */
+                  <form className="classe-form" onSubmit={handleInitiateRegister}>
+                    {/* Photo de profil personnalisée */}
+                    <div className="classe-avatar-picker">
+                      <div className="avatar-disc">
+                        {customAvatar ? (
+                          <div className="custom-photo-wrap">
+                            <img src={customAvatar} alt="Votre photo" />
+                            <button
+                              type="button"
+                              className="btn-trash-avatar"
+                              onClick={handleRemovePhoto}
+                              title="Supprimer"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="monogram-disc">
+                            <span>{getMonogram()}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="avatar-meta-info">
+                        <span className="avatar-title">Photo personnelle</span>
+                        <span className="avatar-sub">Importez votre cliché ou conservez votre initiale.</span>
+                        <label htmlFor={fileInputId} className="btn-choose-file">
+                          <Camera size={13} />
+                          <span>{customAvatar ? 'Changer de photo' : 'Importer une photo'}</span>
+                          <input 
+                            id={fileInputId} 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handlePhotoUpload} 
+                            hidden 
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Adresse Email (Obligatoire) */}
+                    <div className="classe-input-group">
+                      <label htmlFor="reg-email">Adresse e-mail</label>
+                      <div className="classe-field-box">
+                        <Mail size={15} className="field-icon" />
+                        <input
+                          id="reg-email"
+                          type="email"
+                          placeholder="votre.adresse@domaine.com"
+                          value={email}
+                          onChange={(e) => handleEmailChange(e.target.value)}
+                          autoComplete="email"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Pseudo */}
+                    <div className="classe-input-group">
+                      <label htmlFor="reg-pseudo">Pseudo Scroller</label>
+                      <div className="classe-field-box">
+                        <span className="prefix">@</span>
+                        <input
+                          id="reg-pseudo"
+                          type="text"
+                          placeholder="votre_pseudo"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                          autoComplete="username"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Nom complet ou prénom */}
+                    <div className="classe-input-group">
+                      <label htmlFor="reg-name">Nom complet ou prénom</label>
+                      <div className="classe-field-box">
+                        <User size={15} className="field-icon" />
+                        <input
+                          id="reg-name"
+                          type="text"
+                          placeholder="Ex: Alexandre"
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Mot de passe */}
+                    <div className="classe-input-group">
+                      <label htmlFor="reg-pass">Mot de passe secret</label>
+                      <div className="classe-field-box">
+                        <Lock size={15} className="field-icon" />
+                        <input
+                          id="reg-pass"
+                          type="password"
+                          placeholder="6 caractères minimum"
+                          value={registerPassword}
+                          onChange={(e) => setRegisterPassword(e.target.value)}
+                          autoComplete="new-password"
+                        />
+                      </div>
+                    </div>
+
+                    {registerError && (
+                      <div className="classe-error-notice">
+                        <span>{registerError}</span>
+                      </div>
+                    )}
+
+                    <button type="submit" className="btn-classe-submit">
+                      <span>CONTINUER AVEC CET EMAIL</span>
+                      <ArrowRight size={16} />
+                    </button>
+                  </form>
+                ) : (
+                  /* Étape 2 : Vérification du code par Email */
+                  <div className="classe-verification-flow">
+                    <div className="verification-header">
+                      <button 
+                        type="button" 
+                        className="btn-back-link"
+                        onClick={() => {
+                          sound.playTap();
+                          setRegStep('details');
+                          setRegisterError('');
+                        }}
+                      >
+                        <ArrowLeft size={13} />
+                        <span>Modifier l'adresse</span>
+                      </button>
+                      <div className="verification-badge">
+                        <ShieldCheck size={13} className="text-red" />
+                        <span>VÉRIFICATION SÉCURISÉE</span>
+                      </div>
+                    </div>
+
+                    <div className="verification-text-block">
+                      <h3 className="verification-title">Vérifiez votre boîte mail</h3>
+                      <p className="verification-sub">
+                        Un code d'activation à 6 chiffres a été émis pour <strong>{email}</strong>.
+                      </p>
+                    </div>
+
+                    {/* Notification simulée d'envoi du mail pour une activation fluide */}
+                    <div className="email-dispatch-card">
+                      <div className="dispatch-top-row">
+                        <div className="dispatch-sender">
+                          <Mail size={13} />
+                          <span>Sécurité SCROLLER</span>
+                        </div>
+                        <span className="dispatch-tag">À l'instant</span>
+                      </div>
+                      <div className="dispatch-body">
+                        <span className="dispatch-label">Code d'activation confidentiel :</span>
+                        <div className="dispatch-code-row">
+                          <span className="dispatch-code">
+                            {generatedCode.slice(0, 3)} {generatedCode.slice(3)}
+                          </span>
+                          <button 
+                            type="button" 
+                            className="btn-paste-code"
+                            onClick={() => {
+                              sound.playPop();
+                              setVerificationCode(generatedCode);
+                              setRegisterError('');
+                            }}
                           >
-                            <Trash2 size={12} />
+                            {verificationCode === generatedCode ? (
+                              <>
+                                <Check size={12} />
+                                <span>Code inséré</span>
+                              </>
+                            ) : (
+                              <span>Insérer ce code</span>
+                            )}
                           </button>
                         </div>
-                      ) : (
-                        <div className="monogram-disc">
-                          <span>{getMonogram()}</span>
+                      </div>
+                    </div>
+
+                    <form onSubmit={handleConfirmVerification} className="classe-form">
+                      <div className="classe-input-group">
+                        <label htmlFor="reg-code">Saisir le code à 6 chiffres</label>
+                        <div className="classe-field-box digit-field">
+                          <KeyRound size={15} className="field-icon" />
+                          <input
+                            id="reg-code"
+                            type="text"
+                            maxLength={6}
+                            placeholder="Ex: 849201"
+                            value={verificationCode}
+                            onChange={(e) => {
+                              setVerificationCode(e.target.value.replace(/\D/g, ''));
+                              setRegisterError('');
+                            }}
+                            autoComplete="one-time-code"
+                            autoFocus
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {registerError && (
+                        <div className="classe-error-notice">
+                          <span>{registerError}</span>
                         </div>
                       )}
-                    </div>
 
-                    <div className="avatar-meta-info">
-                      <span className="avatar-title">Photo personnelle</span>
-                      <span className="avatar-sub">Importez votre cliché ou conservez votre initiale.</span>
-                      <label htmlFor={fileInputId} className="btn-choose-file">
-                        <Camera size={13} />
-                        <span>{customAvatar ? 'Changer de photo' : 'Importer une photo'}</span>
-                        <input 
-                          id={fileInputId} 
-                          type="file" 
-                          accept="image/*" 
-                          onChange={handlePhotoUpload} 
-                          hidden 
-                        />
-                      </label>
-                    </div>
+                      {resendNotice && (
+                        <div className="classe-success-notice">
+                          <Check size={13} />
+                          <span>Nouveau code généré avec succès.</span>
+                        </div>
+                      )}
+
+                      <button type="submit" className="btn-classe-submit">
+                        <span>CONFIRMER ET CRÉER MON ESPACE</span>
+                        <ArrowRight size={16} />
+                      </button>
+
+                      <div className="verification-actions">
+                        <button 
+                          type="button" 
+                          className="btn-resend-link"
+                          onClick={handleResendCode}
+                        >
+                          <RefreshCw size={12} />
+                          <span>Renvoyer un nouveau code</span>
+                        </button>
+                      </div>
+                    </form>
                   </div>
-
-                  {/* Champs de formulaire */}
-                  <div className="classe-input-group">
-                    <label htmlFor="reg-pseudo">Pseudo</label>
-                    <div className="classe-field-box">
-                      <span className="prefix">@</span>
-                      <input
-                        id="reg-pseudo"
-                        type="text"
-                        placeholder="votre_pseudo"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        autoComplete="username"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="classe-input-group">
-                    <label htmlFor="reg-name">Nom complet ou prénom</label>
-                    <div className="classe-field-box">
-                      <User size={15} className="field-icon" />
-                      <input
-                        id="reg-name"
-                        type="text"
-                        placeholder="Ex: Alexandre"
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="classe-input-group">
-                    <label htmlFor="reg-pass">Code d'accès secret (optionnel)</label>
-                    <div className="classe-field-box">
-                      <KeyRound size={15} className="field-icon" />
-                      <input
-                        id="reg-pass"
-                        type="password"
-                        placeholder="Laissez vide ou tapez un code"
-                        value={registerPassword}
-                        onChange={(e) => setRegisterPassword(e.target.value)}
-                        autoComplete="new-password"
-                      />
-                    </div>
-                  </div>
-
-                  <button type="submit" className="btn-classe-submit">
-                    <span>ENTRER DANS MON ESPACE</span>
-                    <ArrowRight size={16} />
-                  </button>
-                </form>
+                )
               ) : (
+                /* Mode Connexion */
                 <form className="classe-form" onSubmit={handleLoginSubmit}>
                   {existingAccount ? (
                     <div className="classe-account-pill">
                       <img src={existingAccount.avatarUrl} alt={existingAccount.displayName} className="pill-img" />
                       <div className="pill-texts">
                         <span className="pill-name">{existingAccount.displayName}</span>
-                        <span className="pill-handle">@{existingAccount.username}</span>
+                        <span className="pill-handle">
+                          @{existingAccount.username}
+                          {existingAccount.email ? ` • ${existingAccount.email}` : ''}
+                        </span>
                       </div>
                     </div>
                   ) : (
@@ -366,23 +594,26 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
                       <button 
                         type="button" 
                         className="btn-switch-tab"
-                        onClick={() => setMode('register')}
+                        onClick={() => {
+                          setMode('register');
+                          setRegStep('details');
+                        }}
                       >
-                        Créer mon espace maintenant →
+                        Créer mon compte par email →
                       </button>
                     </div>
                   )}
 
                   <div className="classe-input-group">
-                    <label htmlFor="log-pseudo">Pseudo</label>
+                    <label htmlFor="log-identifier">Email ou Pseudo</label>
                     <div className="classe-field-box">
-                      <span className="prefix">@</span>
+                      <Mail size={15} className="field-icon" />
                       <input
-                        id="log-pseudo"
+                        id="log-identifier"
                         type="text"
-                        placeholder="votre_pseudo"
-                        value={loginUsername}
-                        onChange={(e) => setLoginUsername(e.target.value)}
+                        placeholder="votre@email.com ou @pseudo"
+                        value={loginIdentifier}
+                        onChange={(e) => setLoginIdentifier(e.target.value)}
                         autoComplete="username"
                         required
                       />
@@ -391,13 +622,13 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
 
                   {existingAccount?.password && (
                     <div className="classe-input-group">
-                      <label htmlFor="log-pass">Code d'accès</label>
+                      <label htmlFor="log-pass">Mot de passe de sécurité</label>
                       <div className="classe-field-box">
                         <Lock size={15} className="field-icon" />
                         <input
                           id="log-pass"
                           type="password"
-                          placeholder="Code secret"
+                          placeholder="Code secret ou mot de passe"
                           value={loginPassword}
                           onChange={(e) => setLoginPassword(e.target.value)}
                           autoComplete="current-password"
@@ -414,7 +645,7 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
                   )}
 
                   <button type="submit" className="btn-classe-submit">
-                    <span>DÉVERROUILLER</span>
+                    <span>SE CONNECTER</span>
                     <ArrowRight size={16} />
                   </button>
                 </form>
@@ -552,7 +783,7 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
           </div>
         </section>
 
-        {/* 3. Les 3 Principes Fondateurs de Scroller (Sobre et Classe) */}
+        {/* 3. Les 3 Principes Fondateurs de Scroller */}
         <section className="classe-triad-section">
           <div className="triad-item">
             <span className="triad-num">01</span>

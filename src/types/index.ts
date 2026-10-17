@@ -59,6 +59,7 @@ export interface StoryHighlight {
 export interface UserProfile {
   username: string;
   displayName: string;
+  email?: string;
   bio: string;
   avatarUrl: string;
   theme: 'dark' | 'light';
