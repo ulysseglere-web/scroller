@@ -4447,6 +4447,22 @@
   outline: none;
 }
 
+.btn-toggle-visibility {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  padding: 0 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.btn-toggle-visibility:hover {
+  color: #ffffff;
+}
+
 .btn-classe-submit {
   width: 100%;
   background: #ffffff;

@@ -18,7 +18,9 @@ import {
   Check,
   RefreshCw,
   KeyRound,
-  Loader2
+  Loader2,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import type { UserProfile, PostItem } from '../types';
 import { sound } from '../services/sound';
@@ -65,6 +67,7 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
     existingAccount ? (existingAccount.email || existingAccount.username) : ''
   );
   const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
 
   const fileInputId = useId();
@@ -642,23 +645,30 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
                     </div>
                   </div>
 
-                  {existingAccount?.password && (
-                    <div className="classe-input-group">
-                      <label htmlFor="log-pass">Mot de passe de sécurité</label>
-                      <div className="classe-field-box">
-                        <Lock size={15} className="field-icon" />
-                        <input
-                          id="log-pass"
-                          type="password"
-                          placeholder="Code secret ou mot de passe"
-                          value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          autoComplete="current-password"
-                          required
-                        />
-                      </div>
+                  <div className="classe-input-group">
+                    <label htmlFor="log-pass">Mot de passe secret</label>
+                    <div className="classe-field-box">
+                      <Lock size={15} className="field-icon" />
+                      <input
+                        id="log-pass"
+                        type={showLoginPassword ? 'text' : 'password'}
+                        placeholder="Code secret ou mot de passe"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        autoComplete="current-password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="btn-toggle-visibility"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                        tabIndex={-1}
+                        title={showLoginPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      >
+                        {showLoginPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
                     </div>
-                  )}
+                  </div>
 
                   {loginError && (
                     <div className="classe-error-notice">
