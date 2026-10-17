@@ -79,6 +79,77 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Natural gesture navigation between main tabs (Instagram / TikTok style)
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    let isSwipingCandidate = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+
+      // Ignorer si un modal ou viewer est déjà actif
+      if (isCreateOpen || isCmdOpen || editingPost || viewerMedia || randomMemory || selectedHighlight) {
+        return;
+      }
+
+      // Ignorer si le geste débute sur un carrousel horizontal interne ou un champ interactif
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.closest(
+          '.stories-tray-scroll, .feed-category-pills, .carousel-track, input, textarea, button, .reels-feed-container'
+        )
+      ) {
+        return;
+      }
+
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      startTime = Date.now();
+      isSwipingCandidate = true;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!isSwipingCandidate) return;
+      isSwipingCandidate = false;
+
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const deltaX = endX - startX;
+      const deltaY = endY - startY;
+      const elapsed = Date.now() - startTime;
+
+      // Doit être un swipe horizontal vif (< 500ms, distance > 55px, angle très horizontal)
+      if (elapsed < 500 && Math.abs(deltaX) > 55 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+        const TABS: NavTab[] = ['home', 'search', 'reels', 'profile'];
+        const currentIndex = TABS.indexOf(activeTab);
+
+        if (currentIndex !== -1) {
+          if (deltaX < 0 && currentIndex < TABS.length - 1) {
+            // Glissé vers la gauche -> onglet suivant
+            sound.playTap();
+            setActiveTab(TABS[currentIndex + 1]);
+            window.scrollTo({ top: 0, behavior: 'instant' });
+          } else if (deltaX > 0 && currentIndex > 0) {
+            // Glissé vers la droite -> onglet précédent
+            sound.playTap();
+            setActiveTab(TABS[currentIndex - 1]);
+            window.scrollTo({ top: 0, behavior: 'instant' });
+          }
+        }
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [activeTab, isCreateOpen, isCmdOpen, editingPost, viewerMedia, randomMemory, selectedHighlight]);
+
   // Initial load: ensure fake demo data is cleared once so user creates/connects real account
   useEffect(() => {
     async function loadData() {

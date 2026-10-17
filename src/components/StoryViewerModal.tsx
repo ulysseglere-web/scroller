@@ -78,7 +78,44 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
 
   if (!isOpen || !highlight || stories.length === 0) return null;
 
+  // Swipe down to close physics (Instagram style)
+  const [dragOffsetY, setDragOffsetY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsPaused(true);
+    touchStartPos.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartPos.current) return;
+    const dy = e.touches[0].clientY - touchStartPos.current.y;
+    const dx = e.touches[0].clientX - touchStartPos.current.x;
+
+    // Si le geste descend et est principalement vertical
+    if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
+      setDragOffsetY(dy);
+      setIsDragging(true);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsPaused(false);
+    if (dragOffsetY > 80) {
+      onClose();
+    } else {
+      setDragOffsetY(0);
+      setIsDragging(false);
+    }
+    touchStartPos.current = null;
+  };
+
   const handleNext = () => {
+    if (dragOffsetY > 15) return;
     if (currentSlideIndex < stories.length - 1) {
       setCurrentSlideIndex((idx) => idx + 1);
       setProgress(0);
@@ -88,6 +125,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   };
 
   const handlePrev = () => {
+    if (dragOffsetY > 15) return;
     if (currentSlideIndex > 0) {
       setCurrentSlideIndex((idx) => idx - 1);
       setProgress(0);
@@ -95,6 +133,7 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   };
 
   const handleScreenTouch = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (dragOffsetY > 15) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     if (x < rect.width * 0.35) {
@@ -105,14 +144,28 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   };
 
   return (
-    <div className="story-viewer-backdrop" onClick={onClose}>
+    <div 
+      className="story-viewer-backdrop" 
+      onClick={onClose}
+      style={{
+        backgroundColor: dragOffsetY > 0 ? `rgba(0, 0, 0, ${Math.max(0.2, 0.96 - dragOffsetY / 300)})` : undefined,
+      }}
+    >
       <div 
         className="story-viewer-card" 
         onClick={(e) => e.stopPropagation()}
         onMouseDown={() => setIsPaused(true)}
         onMouseUp={() => setIsPaused(false)}
-        onTouchStart={() => setIsPaused(true)}
-        onTouchEnd={() => setIsPaused(false)}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          transform: dragOffsetY > 0 
+            ? `translate3d(0, ${dragOffsetY}px, 0) scale(${Math.max(0.82, 1 - dragOffsetY / 1000)})` 
+            : undefined,
+          opacity: dragOffsetY > 0 ? Math.max(0.2, 1 - dragOffsetY / 350) : undefined,
+          transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease',
+        }}
       >
         {/* Progress Bars at top */}
         <div className="story-progress-row">

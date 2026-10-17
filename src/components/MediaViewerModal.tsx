@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 
 interface MediaViewerModalProps {
@@ -16,8 +16,15 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
+  // Swipe down to close physics
+  const [dragOffsetY, setDragOffsetY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
+
   useEffect(() => {
     setCurrentIndex(initialIndex);
+    setDragOffsetY(0);
+    setIsDragging(false);
   }, [initialIndex, isOpen]);
 
   useEffect(() => {
@@ -44,9 +51,56 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
     document.body.removeChild(a);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartPos.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartPos.current) return;
+    const dy = e.touches[0].clientY - touchStartPos.current.y;
+    const dx = e.touches[0].clientX - touchStartPos.current.x;
+
+    if (dy > 0 && Math.abs(dy) > Math.abs(dx)) {
+      setDragOffsetY(dy);
+      setIsDragging(true);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (dragOffsetY > 80) {
+      onClose();
+    } else {
+      setDragOffsetY(0);
+      setIsDragging(false);
+    }
+    touchStartPos.current = null;
+  };
+
   return (
-    <div className="media-viewer-backdrop" onClick={onClose}>
-      <div className="media-viewer-content" onClick={(e) => e.stopPropagation()}>
+    <div 
+      className="media-viewer-backdrop" 
+      onClick={onClose}
+      style={{
+        backgroundColor: dragOffsetY > 0 ? `rgba(0, 0, 0, ${Math.max(0.15, 0.95 - dragOffsetY / 300)})` : undefined,
+      }}
+    >
+      <div 
+        className="media-viewer-content" 
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          transform: dragOffsetY > 0 
+            ? `translate3d(0, ${dragOffsetY}px, 0) scale(${Math.max(0.82, 1 - dragOffsetY / 1000)})` 
+            : undefined,
+          opacity: dragOffsetY > 0 ? Math.max(0.2, 1 - dragOffsetY / 350) : undefined,
+          transition: isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease',
+        }}
+      >
         {/* Top actions */}
         <div className="viewer-top-bar">
           <span className="viewer-counter">
