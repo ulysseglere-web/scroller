@@ -98,11 +98,13 @@ export const CreateModal: React.FC<CreateModalProps> = ({
     }
   }, [isOpen, initialFiles, initialMode]);
 
-  // Camera state
+  // Camera & Upload state
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [isEncodingMedia, setIsEncodingMedia] = useState(false);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const addMorePhotosInputRef = useRef<HTMLInputElement>(null);
 
   // Stop camera when unmounting or switching modes
   const stopLiveCamera = () => {
@@ -226,28 +228,47 @@ export const CreateModal: React.FC<CreateModalProps> = ({
 
   if (!isOpen) return null;
 
-  // File upload handler
+  // File upload handler - Conversion 100% autonome et persistante (Base64 DataURL)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    setIsEncodingMedia(true);
+
     Array.from(files).forEach((file) => {
       if (file.type.startsWith('video/')) {
-        const url = URL.createObjectURL(file);
-        setVideoUrl(url);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            const dataUrl = event.target.result as string;
+            setVideoUrl(dataUrl);
+            setSelectedMediaFiles([]);
+            setIsEncodingMedia(false);
+            sound.playPop();
+          }
+        };
+        reader.onerror = () => {
+          alert('Erreur lors de la lecture du fichier vidéo.');
+          setIsEncodingMedia(false);
+        };
+        reader.readAsDataURL(file);
       } else {
         const reader = new FileReader();
         reader.onload = (event) => {
           if (event.target?.result) {
             setSelectedMediaFiles((prev) => [...prev, event.target!.result as string]);
+            setIsEncodingMedia(false);
           }
+        };
+        reader.onerror = () => {
+          setIsEncodingMedia(false);
         };
         reader.readAsDataURL(file);
       }
     });
 
-    // Reset input value to allow re-upload of same file if needed
     if (fileInputRef.current) fileInputRef.current.value = '';
+    if (addMorePhotosInputRef.current) addMorePhotosInputRef.current.value = '';
   };
 
   // Live Camera Activation
@@ -467,6 +488,14 @@ export const CreateModal: React.FC<CreateModalProps> = ({
                 </div>
               ) : (
                 <div className="media-preview-deck">
+                  {/* Indicateur de traitement vidéo persistant */}
+                  {isEncodingMedia && (
+                    <div className="media-encoding-overlay">
+                      <div className="loading-spinner-circle" />
+                      <span>Encodage permanent de la vidéo en cours...</span>
+                    </div>
+                  )}
+
                   {/* Vidéo sélectionnée */}
                   {videoUrl && (
                     <div className="video-preview-wrapper">
@@ -580,7 +609,7 @@ export const CreateModal: React.FC<CreateModalProps> = ({
                         <button
                           type="button"
                           className="btn-add-more-thumb"
-                          onClick={() => fileInputRef.current?.click()}
+                          onClick={() => addMorePhotosInputRef.current?.click()}
                           title="Ajouter d'autres photos pour créer un carrousel"
                         >
                           <Plus size={20} />
@@ -589,7 +618,7 @@ export const CreateModal: React.FC<CreateModalProps> = ({
                       </div>
 
                       <input
-                        ref={fileInputRef}
+                        ref={addMorePhotosInputRef}
                         type="file"
                         accept="image/*"
                         multiple

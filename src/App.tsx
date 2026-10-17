@@ -377,6 +377,12 @@ export const App: React.FC = () => {
     setActiveTab('home');
   };
 
+  const handleUpdateExistingPost = async (updatedPost: PostItem) => {
+    sound.playPop();
+    await savePost(updatedPost);
+    setPosts((prev) => prev.map((p) => (p.id === updatedPost.id ? updatedPost : p)));
+  };
+
   // Zero-friction capture handlers
   const handleDirectMediaClick = () => {
     if (directFileInputRef.current) {
@@ -669,6 +675,7 @@ export const App: React.FC = () => {
             onArchive={handleArchivePost}
             onEdit={(p) => setEditingPost(p)}
             onOpenCreate={() => setIsCreateOpen(true)}
+            onUpdatePost={handleUpdateExistingPost}
           />
         )}
 

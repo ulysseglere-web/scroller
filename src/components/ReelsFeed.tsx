@@ -13,7 +13,9 @@ import {
   ChevronUp,
   X,
   Send,
-  ExternalLink
+  ExternalLink,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import type { PostItem, UserProfile } from '../types';
 import { sound } from '../services/sound';
@@ -26,6 +28,7 @@ interface ReelsFeedProps {
   onArchive: (id: string) => void;
   onEdit: (post: PostItem) => void;
   onOpenCreate: () => void;
+  onUpdatePost?: (post: PostItem) => void;
 }
 
 export const ReelsFeed: React.FC<ReelsFeedProps> = ({
@@ -35,6 +38,7 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
   onArchive,
   onEdit,
   onOpenCreate,
+  onUpdatePost,
 }) => {
   const reels = posts.filter((p) => (p.type === 'reel' || p.type === 'video' || (Boolean(p.audioUrl) && p.type !== 'note')) && !p.isArchived);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -44,6 +48,9 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
   const [activeAnnotationPost, setActiveAnnotationPost] = useState<PostItem | null>(null);
   const [annotationText, setAnnotationText] = useState('');
   const [musicDetailPost, setMusicDetailPost] = useState<PostItem | null>(null);
+  const [brokenVideoIds, setBrokenVideoIds] = useState<Record<string, boolean>>({});
+  const [repairingReelId, setRepairingReelId] = useState<string | null>(null);
+  const repairInputRef = useRef<HTMLInputElement>(null);
 
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -197,6 +204,27 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
     }
   };
 
+  const handleRepairFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !repairingReelId) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (ev.target?.result && onUpdatePost) {
+        const dataUrl = ev.target.result as string;
+        const targetReel = reels.find((r) => r.id === repairingReelId);
+        if (targetReel) {
+          const updated = { ...targetReel, videoUrl: dataUrl };
+          onUpdatePost(updated);
+          setBrokenVideoIds((prev) => ({ ...prev, [repairingReelId]: false }));
+          sound.playPop();
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+    if (repairInputRef.current) repairInputRef.current.value = '';
+  };
+
   const handleMuteToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     sound.playTap();
@@ -233,6 +261,15 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
 
   return (
     <div className="reels-main-wrapper">
+      {/* Hidden file input for one-click video repair */}
+      <input
+        ref={repairInputRef}
+        type="file"
+        accept="video/*"
+        style={{ display: 'none' }}
+        onChange={handleRepairFile}
+      />
+
       {/* Sound toggle at top right */}
       <div className="reels-top-controls">
         <span className="reels-mode-title">Reels</span>
@@ -253,6 +290,8 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
       >
         {reels.map((reel, index) => {
           const isSelected = index === currentIndex;
+          const isBlobVideo = Boolean(reel.videoUrl && reel.videoUrl.startsWith('blob:'));
+          const isBroken = brokenVideoIds[reel.id] || isBlobVideo;
 
           return (
             <div 
@@ -262,15 +301,42 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
             >
               {/* Vertical Media (Video OR Visual Audio Reel) */}
               {reel.videoUrl ? (
-                <video
-                  ref={(el) => { videoRefs.current[index] = el; }}
-                  src={reel.videoUrl}
-                  className="reel-video-element"
-                  loop
-                  playsInline
-                  muted={isMuted}
-                  poster={reel.mediaUrls?.[0]}
-                />
+                <>
+                  <video
+                    ref={(el) => { videoRefs.current[index] = el; }}
+                    src={reel.videoUrl}
+                    className="reel-video-element"
+                    loop
+                    playsInline
+                    muted={isMuted}
+                    poster={reel.mediaUrls?.[0]}
+                    onError={() => {
+                      setBrokenVideoIds((prev) => ({ ...prev, [reel.id]: true }));
+                    }}
+                  />
+
+                  {/* Message & Bouton de Réparation si la vidéo est corrompue (ancien blob) */}
+                  {isBroken && (
+                    <div className="reel-broken-video-overlay" onClick={(e) => e.stopPropagation()}>
+                      <div className="broken-video-content">
+                        <AlertTriangle size={36} className="text-crimson" />
+                        <h4>Vidéo expirée ou non synchronisée</h4>
+                        <p>Cette vidéo utilise un lien temporaire qui a expiré après rechargement. Ré-attachez votre fichier pour le sécuriser définitivement sur tous vos appareils.</p>
+                        <button
+                          type="button"
+                          className="btn-repair-video-action"
+                          onClick={() => {
+                            setRepairingReelId(reel.id);
+                            repairInputRef.current?.click();
+                          }}
+                        >
+                          <RefreshCw size={14} />
+                          <span>Ré-attacher et réparer ma vidéo</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="reel-audio-visual-stage">
                   <img 
