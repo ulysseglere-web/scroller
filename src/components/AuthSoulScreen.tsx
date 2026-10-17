@@ -814,24 +814,42 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
           </div>
         </section>
 
-        {/* 3. Les 3 Principes Fondateurs d'Antisocial */}
-        <section className="classe-triad-section">
-          <div className="triad-item">
-            <span className="triad-num">01</span>
-            <h3>Plein Écran Vertical</h3>
-            <p>Le format immersif 4:5 et les séquences 9:16 sans bordures inutiles, calibrés au pixel près pour votre smartphone.</p>
+        {/* 3. Les 3 Piliers d'Antisocial */}
+        <section className="classe-pillars-section">
+          <div className="pillar-item">
+            <div className="pillar-header">
+              <span className="pillar-num">01</span>
+              <span className="pillar-sep">—</span>
+              <span className="pillar-category">JOURNALING</span>
+            </div>
+            <h3 className="pillar-headline">A new way to journal.</h3>
+            <p className="pillar-text">
+              A digital space that feels natural alongside your analog tools. Your notebooks, your thoughts, your fragments — all part of the same creative process.
+            </p>
           </div>
 
-          <div className="triad-item">
-            <span className="triad-num">02</span>
-            <h3>Sanctuaire 100% Local</h3>
-            <p>Vos contenus ne quittent jamais votre terminal. Stockage flash interne chiffré, sans transmission cloud.</p>
+          <div className="pillar-item">
+            <div className="pillar-header">
+              <span className="pillar-num">02</span>
+              <span className="pillar-sep">—</span>
+              <span className="pillar-category">COMMONPLACE</span>
+            </div>
+            <h3 className="pillar-headline">Your commonplace book.</h3>
+            <p className="pillar-text">
+              Collect what you discover. Save ideas, references, quotes, and things worth remembering. Build your own personal library, one fragment at a time.
+            </p>
           </div>
 
-          <div className="triad-item">
-            <span className="triad-num">03</span>
-            <h3>Zéro Regard Extérieur</h3>
-            <p>Pas d'abonnés, pas de course aux vues, pas d'algorithme. Vous êtes le seul créateur et le seul spectateur.</p>
+          <div className="pillar-item">
+            <div className="pillar-header">
+              <span className="pillar-num">03</span>
+              <span className="pillar-sep">—</span>
+              <span className="pillar-category">LIFE DOCUMENTATION</span>
+            </div>
+            <h3 className="pillar-headline">Document your life.</h3>
+            <p className="pillar-text">
+              Capture the ordinary, the unexpected, and everything in between. Photos, videos, thoughts, and fleeting moments — a living archive of your life.
+            </p>
           </div>
         </section>
       </main>
