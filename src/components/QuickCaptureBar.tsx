@@ -50,11 +50,20 @@ export const QuickCaptureBar: React.FC<QuickCaptureBarProps> = ({
       <div className="quick-capture-card">
         {/* User avatar */}
         <div className="quick-avatar-wrap">
-          <img
-            src={profile.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100'}
-            alt={profile.displayName}
-            className="quick-avatar-img"
-          />
+          {profile.avatarUrl ? (
+            <img
+              src={profile.avatarUrl}
+              alt={profile.displayName}
+              className="quick-avatar-img"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none';
+              }}
+            />
+          ) : (
+            <div className="post-author-monogram" style={{ fontSize: '12px' }}>
+              {(profile.displayName || profile.username || 'A').slice(0, 1).toUpperCase()}
+            </div>
+          )}
         </div>
 
         {/* Inline input */}

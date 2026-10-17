@@ -195,8 +195,13 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
     if (currentVideo) {
       sound.playTap();
       if (currentVideo.paused) {
-        currentVideo.play();
-        setIsPlaying(true);
+        currentVideo.play()
+          .then(() => setIsPlaying(true))
+          .catch(() => {
+            currentVideo.muted = true;
+            setIsMuted(true);
+            currentVideo.play().then(() => setIsPlaying(true)).catch(() => {});
+          });
       } else {
         currentVideo.pause();
         setIsPlaying(false);
@@ -308,8 +313,21 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
                     className="reel-video-element"
                     loop
                     playsInline
+                    preload="auto"
                     muted={isMuted}
                     poster={reel.mediaUrls?.[0]}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    onLoadedData={(e) => {
+                      if (isSelected) {
+                        (e.target as HTMLVideoElement).play().catch(() => {
+                          const v = (e.target as HTMLVideoElement);
+                          v.muted = true;
+                          setIsMuted(true);
+                          v.play().catch(() => {});
+                        });
+                      }
+                    }}
                     onError={() => {
                       setBrokenVideoIds((prev) => ({ ...prev, [reel.id]: true }));
                     }}
@@ -367,8 +385,15 @@ export const ReelsFeed: React.FC<ReelsFeedProps> = ({
               )}
 
               {/* Play/Pause Center Indicator */}
-              {!isPlaying && isSelected && (
-                <div className="reel-center-badge">
+              {!isPlaying && isSelected && !isBroken && (
+                <div 
+                  className="reel-center-badge"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleTapScreen(reel);
+                  }}
+                  title="Lire la vidéo"
+                >
                   <Play size={44} fill="#ffffff" color="#ffffff" />
                 </div>
               )}

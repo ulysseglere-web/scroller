@@ -63,6 +63,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
   // Heart pop animation on double tap
   const [showHeartPop, setShowHeartPop] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
   const lastTapRef = useRef<number>(0);
 
   const formattedDate = new Intl.DateTimeFormat('fr-FR', {
@@ -88,8 +89,15 @@ export const PostCard: React.FC<PostCardProps> = ({
   const handleVideoToggle = () => {
     if (!videoRef.current) return;
     if (videoRef.current.paused) {
-      videoRef.current.play();
-      setIsPlaying(true);
+      videoRef.current.play()
+        .then(() => setIsPlaying(true))
+        .catch(() => {
+          if (videoRef.current) {
+            videoRef.current.muted = true;
+            setIsMuted(true);
+            videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+          }
+        });
     } else {
       videoRef.current.pause();
       setIsPlaying(false);
@@ -122,17 +130,26 @@ export const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
+  const userInitial = (profile.displayName || profile.username || 'A').slice(0, 1).toUpperCase();
+
   return (
     <article className={`post-card ${post.isPinned ? 'is-pinned' : ''}`}>
       {/* Post Header (Instagram style) */}
       <div className="post-header">
         <div className="post-author-row">
           <div className="author-avatar-wrap">
-            <img 
-              src={profile.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'} 
-              alt={profile.displayName} 
-              className="post-author-avatar"
-            />
+            {!avatarError && profile.avatarUrl ? (
+              <img 
+                src={profile.avatarUrl} 
+                alt={profile.displayName} 
+                className="post-author-avatar"
+                onError={() => setAvatarError(true)}
+              />
+            ) : (
+              <div className="post-author-monogram">
+                {userInitial}
+              </div>
+            )}
           </div>
           <div className="post-author-meta">
             <div className="author-name-line">
@@ -263,8 +280,8 @@ export const PostCard: React.FC<PostCardProps> = ({
           </div>
         )}
 
-        {/* 2. VIDEO */}
-        {post.type === 'video' && post.videoUrl && (
+        {/* 2. VIDEO OR REEL */}
+        {(post.type === 'video' || post.type === 'reel') && post.videoUrl && (
           <div className="video-player-container" onClick={handleVideoToggle}>
             <video
               ref={videoRef}
@@ -272,19 +289,22 @@ export const PostCard: React.FC<PostCardProps> = ({
               className="post-video-element"
               playsInline
               loop
+              preload="auto"
               muted={isMuted}
+              poster={post.mediaUrls?.[0]}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
             />
             
             <div className="video-overlay-controls">
               {!isPlaying && (
-                <div className="video-center-play">
-                  <Play size={32} fill="#ffffff" />
+                <div className="video-center-play" onClick={handleVideoToggle}>
+                  <Play size={36} fill="#ffffff" color="#ffffff" />
                 </div>
               )}
               <div className="video-corner-controls">
                 <button 
+                  type="button"
                   className="video-mute-btn" 
                   onClick={handleMuteToggle}
                   aria-label={isMuted ? 'Activer le son' : 'Couper le son'}

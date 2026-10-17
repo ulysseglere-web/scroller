@@ -37,11 +37,20 @@ export const HighlightsBar: React.FC<HighlightsBarProps> = ({
           title="Ajouter à ma story"
         >
           <div className="story-avatar-wrapper add-story">
-            <img 
-              src={profile.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120'} 
-              alt={profile.displayName} 
-              className="story-avatar-img"
-            />
+            {profile.avatarUrl ? (
+              <img 
+                src={profile.avatarUrl} 
+                alt={profile.displayName} 
+                className="story-avatar-img"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="story-monogram-initial">
+                {(profile.displayName || profile.username || 'A').slice(0, 1).toUpperCase()}
+              </div>
+            )}
             <div className="story-plus-badge">
               <Plus size={12} strokeWidth={3} />
             </div>
