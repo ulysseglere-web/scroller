@@ -12,6 +12,7 @@ interface SearchScreenProps {
   onDelete: (id: string) => void;
   onEdit: (post: PostItem) => void;
   onOpenMediaViewer: (mediaUrls: string[], initialIndex: number) => void;
+  onUpdatePost?: (post: PostItem) => void;
 }
 
 export const SearchScreen: React.FC<SearchScreenProps> = ({
@@ -23,6 +24,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
   onDelete,
   onEdit,
   onOpenMediaViewer,
+  onUpdatePost,
 }) => {
   const [query, setQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -235,6 +237,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
               onEdit={onEdit}
               onOpenMediaViewer={onOpenMediaViewer}
               onTagClick={(tag) => setQuery(tag)}
+              onUpdatePost={onUpdatePost}
             />
           ))}
         </div>

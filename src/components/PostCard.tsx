@@ -18,7 +18,9 @@ import {
   Edit3,
   Trash2,
   Archive,
-  Maximize2
+  Maximize2,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import type { PostItem, UserProfile } from '../types';
 import { sound } from '../services/sound';
@@ -34,6 +36,7 @@ interface PostCardProps {
   onEdit: (post: PostItem) => void;
   onOpenMediaViewer: (mediaUrls: string[], initialIndex: number) => void;
   onTagClick?: (tag: string) => void;
+  onUpdatePost?: (post: PostItem) => void;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({
@@ -46,13 +49,19 @@ export const PostCard: React.FC<PostCardProps> = ({
   onEdit,
   onOpenMediaViewer,
   onTagClick,
+  onUpdatePost,
 }) => {
   // State for carousels
   const [carouselIndex, setCarouselIndex] = useState(0);
   // State for video playback
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [videoError, setVideoError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const repairInputRef = useRef<HTMLInputElement>(null);
+
+  const isBlobVideo = Boolean(post.videoUrl && post.videoUrl.startsWith('blob:'));
+  const isVideoBroken = isBlobVideo || videoError;
 
   // Context menu dropdown
   const [showMenu, setShowMenu] = useState(false);
@@ -86,22 +95,65 @@ export const PostCard: React.FC<PostCardProps> = ({
     lastTapRef.current = now;
   };
 
-  const handleVideoToggle = () => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) {
-      videoRef.current.play()
-        .then(() => setIsPlaying(true))
-        .catch(() => {
-          if (videoRef.current) {
-            videoRef.current.muted = true;
+  const handleVideoToggle = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (video.paused) {
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch((err) => {
+            console.warn('Lecture normale bloquée, bascule en mode silencieux:', err);
+            video.muted = true;
             setIsMuted(true);
-            videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
-          }
-        });
+            video.play()
+              .then(() => setIsPlaying(true))
+              .catch((err2) => {
+                console.error('Échec complet de la lecture vidéo:', err2);
+                setVideoError(true);
+              });
+          });
+      }
     } else {
-      videoRef.current.pause();
+      video.pause();
       setIsPlaying(false);
     }
+  };
+
+  const handleRepairVideoFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (ev.target?.result) {
+        const dataUrl = ev.target.result as string;
+        const updated = {
+          ...post,
+          videoUrl: dataUrl,
+        };
+        if (onUpdatePost) {
+          onUpdatePost(updated);
+        } else {
+          onEdit(updated);
+        }
+        setVideoError(false);
+        sound.playPop();
+        if (videoRef.current) {
+          videoRef.current.src = dataUrl;
+          videoRef.current.load();
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+    if (repairInputRef.current) repairInputRef.current.value = '';
   };
 
   const handleMuteToggle = (e: React.MouseEvent) => {
@@ -283,36 +335,82 @@ export const PostCard: React.FC<PostCardProps> = ({
         {/* 2. VIDEO OR REEL */}
         {(post.type === 'video' || post.type === 'reel') && post.videoUrl && (
           <div className="video-player-container" onClick={handleVideoToggle}>
+            <input 
+              type="file" 
+              ref={repairInputRef} 
+              accept="video/*" 
+              style={{ display: 'none' }} 
+              onChange={handleRepairVideoFile} 
+            />
+
             <video
               ref={videoRef}
               src={post.videoUrl}
               className="post-video-element"
               playsInline
+              webkit-playsinline="true"
               loop
               preload="auto"
               muted={isMuted}
               poster={post.mediaUrls?.[0]}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
+              onError={() => setVideoError(true)}
             />
             
-            <div className="video-overlay-controls">
-              {!isPlaying && (
-                <div className="video-center-play" onClick={handleVideoToggle}>
-                  <Play size={36} fill="#ffffff" color="#ffffff" />
-                </div>
-              )}
-              <div className="video-corner-controls">
-                <button 
+            {isVideoBroken ? (
+              <div className="video-broken-notice-box" onClick={(e) => e.stopPropagation()}>
+                <AlertTriangle size={32} className="broken-video-icon text-crimson" />
+                <span className="broken-video-title">Vidéo initiale expirée</span>
+                <p className="broken-video-desc">
+                  Ce souvenir a été créé avec un lien de session temporaire. Ré-attachez votre fichier pour le sécuriser définitivement sur tous vos appareils.
+                </p>
+                <button
                   type="button"
-                  className="video-mute-btn" 
-                  onClick={handleMuteToggle}
-                  aria-label={isMuted ? 'Activer le son' : 'Couper le son'}
+                  className="btn-repair-post-video"
+                  onClick={() => repairInputRef.current?.click()}
                 >
-                  {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                  <RefreshCw size={14} />
+                  <span>Ré-attacher et réparer la vidéo</span>
                 </button>
               </div>
-            </div>
+            ) : (
+              <div className="video-overlay-controls">
+                {!isPlaying && (
+                  <div className="video-center-play">
+                    <Play size={36} fill="#ffffff" color="#ffffff" />
+                  </div>
+                )}
+                <div className="video-corner-controls" onClick={(e) => e.stopPropagation()}>
+                  <button 
+                    type="button"
+                    className="video-mute-btn" 
+                    onClick={handleMuteToggle}
+                    aria-label={isMuted ? 'Activer le son' : 'Couper le son'}
+                  >
+                    {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                  </button>
+                  <button
+                    type="button"
+                    className="video-fullscreen-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (videoRef.current) {
+                        const v = videoRef.current as any;
+                        if (v.requestFullscreen) {
+                          v.requestFullscreen();
+                        } else if (v.webkitEnterFullscreen) {
+                          v.webkitEnterFullscreen();
+                        }
+                      }
+                    }}
+                    title="Plein écran"
+                  >
+                    <Maximize2 size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -397,16 +397,12 @@ export const App: React.FC = () => {
     const urls: string[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      if (file.type.startsWith('video/')) {
-        urls.push(URL.createObjectURL(file));
-      } else {
-        const base64 = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (ev) => resolve(ev.target?.result as string);
-          reader.readAsDataURL(file);
-        });
-        urls.push(base64);
-      }
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target?.result as string);
+        reader.readAsDataURL(file);
+      });
+      urls.push(base64);
     }
 
     setPreloadedFiles(urls);
@@ -660,6 +656,7 @@ export const App: React.FC = () => {
                   onEdit={(p) => setEditingPost(p)}
                   onOpenMediaViewer={(urls, idx) => setViewerMedia({ urls, initialIndex: idx })}
                   onTagClick={() => setActiveTab('search')}
+                  onUpdatePost={handleUpdateExistingPost}
                 />
               ))
             )}
@@ -690,6 +687,7 @@ export const App: React.FC = () => {
             onDelete={handleDeletePost}
             onEdit={(p) => setEditingPost(p)}
             onOpenMediaViewer={(urls, idx) => setViewerMedia({ urls, initialIndex: idx })}
+            onUpdatePost={handleUpdateExistingPost}
           />
         )}
 
@@ -786,6 +784,7 @@ export const App: React.FC = () => {
                 setRandomMemory(null);
                 setActiveTab('search');
               }}
+              onUpdatePost={handleUpdateExistingPost}
             />
             <button className="flashback-close-btn" onClick={() => setRandomMemory(null)}>
               Refermer ce souvenir
