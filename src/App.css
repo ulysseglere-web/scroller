@@ -53,7 +53,23 @@
 .sidebar-logo-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.brand-app-logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.sidebar-brand-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: block;
+  flex-shrink: 0;
 }
 
 .brand-wordmark {

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <filter id="red-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="16" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="blade-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#a1a1aa"/>
+    </linearGradient>
+  </defs>
+
+  <!-- App Icon Squircle Background -->
+  <rect width="512" height="512" rx="116" fill="#000000"/>
+  <rect x="4" y="4" width="504" height="504" rx="112" stroke="#ffffff" stroke-opacity="0.12" stroke-width="4"/>
+
+  <!-- Outer Architectural Aperture Frame (9:16 aspect ratio guide hints) -->
+  <rect x="96" y="80" width="320" height="352" rx="44" stroke="#ffffff" stroke-width="12" stroke-dasharray="16 12" stroke-opacity="0.35"/>
+
+  <!-- Minimalist Precision Viewfinder Corners -->
+  <path d="M 124 140 L 124 108 L 156 108" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 388 140 L 388 108 L 356 108" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 124 372 L 124 404 L 156 404" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 388 372 L 388 404 L 356 404" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- The "S" Infinite Scroll / Reel Shutter Blades -->
+  <!-- Top Arc (starts left, curves over top to right) -->
+  <path d="M 168 256 C 168 184 212 164 256 164 C 316 164 348 200 348 244 C 348 300 276 312 256 312" 
+        stroke="url(#blade-grad)" stroke-width="26" stroke-linecap="round" fill="none"/>
+
+  <!-- Bottom Arc (continues curve to bottom and left) -->
+  <path d="M 256 200 C 236 200 164 212 164 268 C 164 312 196 348 256 348 C 300 348 344 328 344 256" 
+        stroke="url(#blade-grad)" stroke-width="26" stroke-linecap="round" fill="none"/>
+
+  <!-- Center Pulse: The "Alone" Recording Core (Crimson Red) -->
+  <circle cx="256" cy="256" r="34" fill="#ff1e27" filter="url(#red-glow)"/>
+  <circle cx="256" cy="256" r="14" fill="#ffffff"/>
+</svg>

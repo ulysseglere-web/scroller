@@ -1,0 +1,26 @@
+{
+  "name": "SCROLLER — The social media where you're alone",
+  "short_name": "SCROLLER",
+  "description": "The private social media sanctuary where you are alone. No followers, zero tracking, 100% offline-first IndexedDB.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["lifestyle", "photography", "social"]
+}
