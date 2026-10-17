@@ -17,15 +17,17 @@ import {
   ShieldCheck,
   Check,
   RefreshCw,
-  KeyRound
+  KeyRound,
+  Loader2
 } from 'lucide-react';
-import type { UserProfile } from '../types';
+import type { UserProfile, PostItem } from '../types';
 import { sound } from '../services/sound';
+import { registerOnCloud, loginOnCloud } from '../services/cloudSync';
 
 interface AuthSoulScreenProps {
   existingAccount: UserProfile | null;
-  onLogin: (profile: UserProfile) => void;
-  onRegister: (profile: UserProfile) => void;
+  onLogin: (profile: UserProfile, cloudPosts?: PostItem[]) => void;
+  onRegister: (profile: UserProfile, password?: string) => void;
   onImportBackup: (jsonContent: string) => void;
 }
 
@@ -56,6 +58,7 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
   const [verificationCode, setVerificationCode] = useState('');
   const [registerError, setRegisterError] = useState('');
   const [resendNotice, setResendNotice] = useState(false);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(false);
 
   // Login form state
   const [loginIdentifier, setLoginIdentifier] = useState(
@@ -167,7 +170,7 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
     setTimeout(() => setResendNotice(false), 3500);
   };
 
-  const handleConfirmVerification = (e: React.FormEvent) => {
+  const handleConfirmVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegisterError('');
 
@@ -176,7 +179,7 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
       return;
     }
 
-    sound.playChime();
+    setIsLoadingAuth(true);
 
     const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_.]/g, '');
     const cleanDisplayName = displayName.trim() || cleanUsername || 'Moi';
@@ -200,38 +203,57 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
       password: registerPassword.trim(),
     };
 
-    onRegister(newProfile);
-  };
+    // Register on the global Cloudflare edge KV
+    const regResult = await registerOnCloud(newProfile, registerPassword.trim());
+    setIsLoadingAuth(false);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError('');
-
-    if (!existingAccount) {
-      setLoginError('Aucun compte enregistré sur cet appareil.');
+    if (!regResult.success && regResult.error) {
+      setRegisterError(regResult.error);
       return;
-    }
-
-    const rawInput = loginIdentifier.trim().toLowerCase();
-    const cleanUsername = rawInput.replace(/^@/, '');
-
-    const matchEmail = existingAccount.email && existingAccount.email.trim().toLowerCase() === rawInput;
-    const matchUsername = existingAccount.username.trim().toLowerCase() === cleanUsername;
-
-    if (!matchEmail && !matchUsername) {
-      setLoginError('Aucun compte associé à cet e-mail ou pseudo.');
-      return;
-    }
-
-    if (existingAccount.password && existingAccount.password.trim() !== '') {
-      if (loginPassword.trim() !== existingAccount.password.trim()) {
-        setLoginError('Mot de passe ou code d\'accès incorrect.');
-        return;
-      }
     }
 
     sound.playChime();
-    onLogin(existingAccount);
+    onRegister(newProfile, registerPassword.trim());
+  };
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+    setIsLoadingAuth(true);
+
+    // 1. Authenticate with Cloudflare KV network (works on ANY device)
+    const cloudResult = await loginOnCloud(loginIdentifier, loginPassword);
+    if (cloudResult.success && cloudResult.profile) {
+      sound.playChime();
+      setIsLoadingAuth(false);
+      onLogin(cloudResult.profile, cloudResult.posts);
+      return;
+    }
+
+    // 2. Fallback on existingAccount on this browser if offline
+    if (existingAccount) {
+      const rawInput = loginIdentifier.trim().toLowerCase();
+      const cleanUsername = rawInput.replace(/^@/, '');
+
+      const matchEmail = existingAccount.email && existingAccount.email.trim().toLowerCase() === rawInput;
+      const matchUsername = existingAccount.username.trim().toLowerCase() === cleanUsername;
+
+      if (matchEmail || matchUsername) {
+        if (!existingAccount.password || existingAccount.password.trim() === '' || loginPassword.trim() === existingAccount.password.trim()) {
+          sound.playChime();
+          setIsLoadingAuth(false);
+          onLogin(existingAccount);
+          return;
+        } else {
+          setIsLoadingAuth(false);
+          setLoginError('Mot de passe incorrect.');
+          return;
+        }
+      }
+    }
+
+    setIsLoadingAuth(false);
+    setLoginError(cloudResult.error || 'Aucun compte associé à cet e-mail ou pseudo.');
   };
 
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -644,9 +666,18 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
                     </div>
                   )}
 
-                  <button type="submit" className="btn-classe-submit">
-                    <span>SE CONNECTER</span>
-                    <ArrowRight size={16} />
+                  <button type="submit" className="btn-classe-submit" disabled={isLoadingAuth}>
+                    {isLoadingAuth ? (
+                      <>
+                        <Loader2 size={16} className="spin-animate" />
+                        <span>SYNCHRONISATION DU COMPTE...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>SE CONNECTER</span>
+                        <ArrowRight size={16} />
+                      </>
+                    )}
                   </button>
                 </form>
               )}

@@ -1,11 +1,20 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "scroller",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-10-12",
   "observability": {
     "enabled": true
   },
   "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application"
-  }
+  },
+  "kv_namespaces": [
+    {
+      "binding": "ANTISOCIAL_VAULT",
+      "id": "71cd4d4ef5734c8fb5cea2a665bb1651"
+    }
+  ]
 }

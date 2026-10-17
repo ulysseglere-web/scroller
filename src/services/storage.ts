@@ -2,14 +2,14 @@ import type { PostItem, UserProfile } from '../types';
 
 const DB_NAME = 'scroller_db';
 const DB_VERSION = 1;
-const STORE_POSTS = 'posts';
-const STORE_SETTINGS = 'settings';
+export const STORE_POSTS = 'posts';
+export const STORE_SETTINGS = 'settings';
 
 const LOCAL_STORAGE_KEY_POSTS = 'scroller_posts_backup';
 const LOCAL_STORAGE_KEY_PROFILE = 'scroller_profile_backup';
 const SESSION_AUTH_KEY = 'scroller_auth_session';
 
-function openDatabase(): Promise<IDBDatabase> {
+export function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     if (!window.indexedDB) {
       reject(new Error('IndexedDB not supported'));

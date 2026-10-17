@@ -29,6 +29,7 @@ import { CommandPalette } from './components/CommandPalette';
 import { AuthSoulScreen } from './components/AuthSoulScreen';
 import { sound } from './services/sound';
 import { Sparkles, Plus } from 'lucide-react';
+import { triggerBackgroundPush, pullCloudSync, clearStoredSession } from './services/cloudSync';
 
 const CLEAN_V3_KEY = 'scroller_v3_clean_slate';
 
@@ -98,6 +99,18 @@ export const App: React.FC = () => {
       const storedPosts = await getStoredPosts();
       setPosts(storedPosts);
       setIsLoaded(true);
+
+      // Multi-device sync: fetch latest cloud vault if account has email
+      if (storedProfile?.email) {
+        pullCloudSync(storedProfile.email).then((cloudData) => {
+          if (cloudData && Array.isArray(cloudData.posts)) {
+            setPosts(cloudData.posts);
+            if (cloudData.profile) {
+              setProfile(cloudData.profile);
+            }
+          }
+        });
+      }
     }
     loadData();
   }, []);
@@ -106,6 +119,13 @@ export const App: React.FC = () => {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // Continuous background sync push when posts or profile change
+  useEffect(() => {
+    if (isLoaded && isAuthenticated && profile.email) {
+      triggerBackgroundPush(posts, profile);
+    }
+  }, [posts, profile, isLoaded, isAuthenticated]);
 
   // Auth Handlers
   const handleRegister = async (newProfile: UserProfile) => {
@@ -116,17 +136,27 @@ export const App: React.FC = () => {
     setSessionAuthenticated(true);
     setIsAuthenticated(true);
     setPosts([]);
+    triggerBackgroundPush([], newProfile);
   };
 
-  const handleLogin = (userProfile: UserProfile) => {
+  const handleLogin = (userProfile: UserProfile, cloudPosts?: PostItem[]) => {
     sound.playChime();
     setProfile(userProfile);
+    if (cloudPosts && Array.isArray(cloudPosts)) {
+      setPosts(cloudPosts);
+    }
+    setExistingAccount(userProfile);
     setSessionAuthenticated(true);
     setIsAuthenticated(true);
+    if (userProfile.theme) {
+      setTheme(userProfile.theme);
+      document.documentElement.setAttribute('data-theme', userProfile.theme);
+    }
   };
 
   const handleLogout = () => {
     sound.playTap();
+    clearStoredSession();
     setSessionAuthenticated(false);
     setIsAuthenticated(false);
   };
