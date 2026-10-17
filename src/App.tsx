@@ -29,7 +29,7 @@ import { EditPostModal } from './components/EditPostModal';
 import { CommandPalette } from './components/CommandPalette';
 import { AuthSoulScreen } from './components/AuthSoulScreen';
 import { sound } from './services/sound';
-import { Sparkles, Plus } from 'lucide-react';
+import { Sparkles, Plus, Shuffle } from 'lucide-react';
 import { triggerBackgroundPush, pullCloudSync, clearStoredSession } from './services/cloudSync';
 
 const CLEAN_V3_KEY = 'scroller_v3_clean_slate';
@@ -149,6 +149,75 @@ export const App: React.FC = () => {
       window.removeEventListener('touchend', handleTouchEnd);
     };
   }, [activeTab, isCreateOpen, isCmdOpen, editingPost, viewerMedia, randomMemory, selectedHighlight]);
+
+  // Pull-to-refresh to reshuffle random feed
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (activeTab !== 'home') return;
+
+    let startY = 0;
+    let isPullCandidate = false;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (window.scrollY <= 2 && e.touches.length === 1) {
+        startY = e.touches[0].clientY;
+        isPullCandidate = true;
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isPullCandidate) return;
+      if (window.scrollY > 2) {
+        isPullCandidate = false;
+        setPullDistance(0);
+        return;
+      }
+
+      const currentY = e.touches[0].clientY;
+      const dy = currentY - startY;
+
+      if (dy > 0) {
+        // Elastic pull resistance
+        const dist = Math.min(80, dy * 0.45);
+        setPullDistance(dist);
+      } else {
+        setPullDistance(0);
+      }
+    };
+
+    const onTouchEnd = () => {
+      if (!isPullCandidate) return;
+      isPullCandidate = false;
+
+      if (pullDistance >= 48) {
+        setIsPullRefreshing(true);
+        sound.playPop();
+        if ('vibrate' in navigator) {
+          try { navigator.vibrate(15); } catch {}
+        }
+        setShuffleSeed((s) => s + 1);
+
+        setTimeout(() => {
+          setIsPullRefreshing(false);
+          setPullDistance(0);
+        }, 550);
+      } else {
+        setPullDistance(0);
+      }
+    };
+
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [activeTab, pullDistance]);
 
   // Initial load: ensure fake demo data is cleared once so user creates/connects real account
   useEffect(() => {
@@ -509,6 +578,30 @@ export const App: React.FC = () => {
               totalPostsCount={feedPosts.length}
               onOpenCmd={() => setIsCmdOpen(true)}
             />
+
+            {/* Pull to refresh floating indicator */}
+            {(pullDistance > 0 || isPullRefreshing) && (
+              <div 
+                className="pull-refresh-indicator-wrap" 
+                style={{
+                  height: isPullRefreshing ? '46px' : `${pullDistance}px`,
+                  opacity: Math.min(1, (isPullRefreshing ? 50 : pullDistance) / 30),
+                }}
+              >
+                <div className={`pull-refresh-badge ${pullDistance >= 48 ? 'ready' : ''} ${isPullRefreshing ? 'refreshing' : ''}`}>
+                  <Shuffle 
+                    size={16} 
+                    className={`pull-refresh-icon ${isPullRefreshing ? 'spinning' : ''}`}
+                    style={{
+                      transform: isPullRefreshing ? undefined : `rotate(${pullDistance * 5}deg)`,
+                    }}
+                  />
+                  <span className="pull-refresh-label">
+                    {isPullRefreshing ? 'Mélange des souvenirs...' : pullDistance >= 48 ? 'Relâcher pour mélanger' : 'Tirer pour mélanger'}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Stories Tray & Category Pills (Instagram / Threads style) */}
             <HighlightsBar

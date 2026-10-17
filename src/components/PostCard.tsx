@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import type { PostItem, UserProfile } from '../types';
 import { sound } from '../services/sound';
+import { PinchZoomImage } from './PinchZoomImage';
 
 interface PostCardProps {
   post: PostItem;
@@ -203,7 +204,7 @@ export const PostCard: React.FC<PostCardProps> = ({
         {/* 1. PHOTO OR CAROUSEL */}
         {(post.type === 'photo' || post.type === 'carousel') && post.mediaUrls && post.mediaUrls.length > 0 && (
           <div className="media-carousel-container">
-            <img
+            <PinchZoomImage
               src={post.mediaUrls[carouselIndex] || post.mediaUrls[0]}
               alt={post.caption || 'Souvenir'}
               className="post-media-image"
