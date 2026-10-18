@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Sparkles } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import type { FeedFilter, UserProfile, StoryHighlight } from '../types';
 import { sound } from '../services/sound';
 
@@ -7,7 +7,7 @@ interface HighlightsBarProps {
   currentFilter: FeedFilter;
   onSelectFilter: (filter: FeedFilter) => void;
   onOpenCreate: () => void;
-  onOpenRandomMemory: () => void;
+  onOpenRandomMemory?: () => void;
   hasFavorites: boolean;
   profile: UserProfile;
   highlights: StoryHighlight[];
@@ -16,7 +16,6 @@ interface HighlightsBarProps {
 
 export const HighlightsBar: React.FC<HighlightsBarProps> = ({
   onOpenCreate,
-  onOpenRandomMemory,
   profile,
   highlights,
   onOpenStory,
@@ -77,25 +76,6 @@ export const HighlightsBar: React.FC<HighlightsBarProps> = ({
             <span className="story-label">{hl.title}</span>
           </div>
         ))}
-
-        {/* Resurface Flashback Story */}
-        <div 
-          className="story-circle-item" 
-          onClick={() => {
-            sound.playChime();
-            onOpenRandomMemory();
-          }}
-          role="button"
-          tabIndex={0}
-          title="Faire resurgir un souvenir"
-        >
-          <div className="story-avatar-wrapper echo-story">
-            <div className="story-echo-icon">
-              <Sparkles size={20} strokeWidth={2} />
-            </div>
-          </div>
-          <span className="story-label">Écho</span>
-        </div>
       </div>
     </div>
   );
