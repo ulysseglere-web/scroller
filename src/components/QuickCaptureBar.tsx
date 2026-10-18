@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Camera, ArrowUp } from 'lucide-react';
 import type { UserProfile } from '../types';
 import { sound } from '../services/sound';
@@ -16,7 +16,16 @@ export const QuickCaptureBar: React.FC<QuickCaptureBarProps> = ({
 }) => {
   const [text, setText] = useState('');
   const [isFocused, setIsFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea seamlessly as text grows
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    const newHeight = Math.min(220, Math.max(26, el.scrollHeight));
+    el.style.height = `${newHeight}px`;
+  }, [text]);
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -26,13 +35,21 @@ export const QuickCaptureBar: React.FC<QuickCaptureBarProps> = ({
     sound.playChime();
     onSubmitText(trimmed);
     setText('');
-    if (inputRef.current) {
-      inputRef.current.blur();
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.blur();
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // If Ctrl+Enter or Cmd+Enter: submit immediately
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSubmit();
+      return;
+    }
+    // If desktop Enter on short single line without shift: submit
+    if (e.key === 'Enter' && !e.shiftKey && text.length < 80 && !text.includes('\n')) {
       e.preventDefault();
       handleSubmit();
     }
@@ -44,9 +61,10 @@ export const QuickCaptureBar: React.FC<QuickCaptureBarProps> = ({
   };
 
   const hasText = text.trim().length > 0;
+  const isMultiLine = text.includes('\n') || text.length > 55;
 
   return (
-    <div className={`quick-capture-wrap ${isFocused ? 'focused' : ''}`}>
+    <div className={`quick-capture-wrap ${isFocused ? 'focused' : ''} ${isMultiLine ? 'is-multiline' : ''}`}>
       <div className="quick-capture-card">
         {/* User avatar */}
         <div className="quick-avatar-wrap">
@@ -66,12 +84,12 @@ export const QuickCaptureBar: React.FC<QuickCaptureBarProps> = ({
           )}
         </div>
 
-        {/* Inline input */}
+        {/* Inline auto-resizing textarea */}
         <div className="quick-input-col">
-          <input
-            ref={inputRef}
-            type="text"
-            className="quick-capture-input"
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            className="quick-capture-input quick-capture-textarea"
             placeholder="Une pensée, un souvenir fugace..."
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -107,6 +125,13 @@ export const QuickCaptureBar: React.FC<QuickCaptureBarProps> = ({
           )}
         </div>
       </div>
+
+      {isMultiLine && (
+        <div className="quick-capture-helper-row">
+          <span className="helper-stats">{text.length} caractères</span>
+          <span className="helper-hint">Appuyez sur Publier ↑ ou Ctrl+Entrée</span>
+        </div>
+      )}
     </div>
   );
 };

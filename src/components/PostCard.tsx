@@ -686,14 +686,15 @@ export const PostCard: React.FC<PostCardProps> = ({
         {/* Clean Comment Composer */}
         {(showAnnotationInput || !post.privateAnnotation) && (
           <div className="post-comment-composer">
-            <input
-              type="text"
+            <textarea
+              rows={1}
               className="comment-clean-input"
               placeholder="Ajouter un commentaire..."
               value={commentDraft}
               onChange={(e) => setCommentDraft(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && commentDraft.trim()) {
+                if (e.key === 'Enter' && !e.shiftKey && commentDraft.trim()) {
+                  e.preventDefault();
                   handleSaveComment(commentDraft);
                 }
               }}
