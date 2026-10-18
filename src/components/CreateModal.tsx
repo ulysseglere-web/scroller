@@ -315,12 +315,12 @@ export const CreateModal: React.FC<CreateModalProps> = ({
       }
 
       const isVideo = Boolean(videoUrl);
-      const isAudioReel = Boolean(audioUrl) && !isVideo;
+      const isAudioOnlyReel = Boolean(audioUrl) && !isVideo && selectedMediaFiles.length === 0;
       const isCarousel = selectedMediaFiles.length > 1;
 
       const newPost: PostItem = {
         id: `post_${Date.now()}`,
-        type: (isVideo || isAudioReel) ? 'reel' : isCarousel ? 'carousel' : 'photo',
+        type: (isVideo || isAudioOnlyReel) ? 'reel' : isCarousel ? 'carousel' : 'photo',
         createdAt: new Date().toISOString(),
         caption: caption.trim(),
         mediaUrls: isVideo ? undefined : (selectedMediaFiles.length > 0 ? selectedMediaFiles : (audioCover ? [audioCover] : undefined)),

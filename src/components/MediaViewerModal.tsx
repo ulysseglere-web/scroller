@@ -118,7 +118,22 @@ export const MediaViewerModal: React.FC<MediaViewerModalProps> = ({
 
         {/* Media area */}
         <div className="viewer-stage">
-          <img src={currentMedia} alt="Agrandissement" className="viewer-image" />
+          {currentMedia.startsWith('data:video/') || 
+           currentMedia.endsWith('.mp4') || 
+           currentMedia.endsWith('.mov') || 
+           currentMedia.endsWith('.webm') ||
+           currentMedia.includes('video') ? (
+            <video 
+              src={currentMedia} 
+              controls 
+              autoPlay 
+              playsInline 
+              className="viewer-video"
+              style={{ maxHeight: '85vh', maxWidth: '100%', objectFit: 'contain' }}
+            />
+          ) : (
+            <img src={currentMedia} alt="Agrandissement" className="viewer-image" />
+          )}
         </div>
 
         {/* Navigation arrows */}

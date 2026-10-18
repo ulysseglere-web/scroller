@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Heart, 
   MessageCircle, 
@@ -20,7 +20,8 @@ import {
   Archive,
   Maximize2,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Music
 } from 'lucide-react';
 import type { PostItem, UserProfile } from '../types';
 import { sound } from '../services/sound';
@@ -75,6 +76,47 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [showHeartPop, setShowHeartPop] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const lastTapRef = useRef<number>(0);
+
+  // Audio playback for feed posts with attached music/wav
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleToggleAudio = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!post.audioUrl) {
+      if (post.spotifyUrl) {
+        window.open(post.spotifyUrl, '_blank', 'noopener,noreferrer');
+      }
+      return;
+    }
+
+    if (!audioPlayerRef.current) {
+      audioPlayerRef.current = new Audio(post.audioUrl);
+      audioPlayerRef.current.onended = () => setIsPlayingAudio(false);
+    }
+
+    if (isPlayingAudio) {
+      audioPlayerRef.current.pause();
+      setIsPlayingAudio(false);
+    } else {
+      sound.playTap();
+      audioPlayerRef.current.play()
+        .then(() => setIsPlayingAudio(true))
+        .catch((err) => {
+          console.warn('Erreur lecture audio:', err);
+          setIsPlayingAudio(false);
+        });
+    }
+  };
 
   const formattedDate = new Intl.DateTimeFormat('fr-FR', {
     day: 'numeric',
@@ -231,6 +273,19 @@ export const PostCard: React.FC<PostCardProps> = ({
             {post.location && (
               <span className="post-location">{post.location}</span>
             )}
+            {post.audioTrack && (
+              <div 
+                className={`post-header-audio-badge ${isPlayingAudio ? 'is-playing' : ''}`}
+                onClick={handleToggleAudio}
+                title={post.audioUrl ? (isPlayingAudio ? 'Mettre en pause' : 'Écouter le morceau') : (post.spotifyUrl ? 'Ouvrir sur Spotify' : post.audioTrack)}
+                role="button"
+                tabIndex={0}
+              >
+                <Music size={11} className={`music-note-icon ${isPlayingAudio ? 'sw-anim' : ''}`} />
+                <span className="post-music-name">{post.audioTrack}</span>
+                {post.spotifyUrl && <span className="post-spotify-badge">Spotify</span>}
+              </div>
+            )}
           </div>
         </div>
 
@@ -342,6 +397,22 @@ export const PostCard: React.FC<PostCardProps> = ({
                   ))}
                 </div>
               </>
+            )}
+
+            {/* Floating Music Pill on Photo (Instagram Feed style) */}
+            {post.audioTrack && (
+              <div 
+                className={`post-media-floating-music ${isPlayingAudio ? 'is-playing' : ''}`}
+                onClick={handleToggleAudio}
+                title={post.audioUrl ? (isPlayingAudio ? 'Pause' : 'Écouter le son') : (post.spotifyUrl ? 'Ouvrir sur Spotify' : post.audioTrack)}
+              >
+                <div className="mini-soundwave-bars">
+                  <span className={`sw-b ${isPlayingAudio ? 'anim-1' : ''}`} />
+                  <span className={`sw-b ${isPlayingAudio ? 'anim-2' : ''}`} />
+                  <span className={`sw-b ${isPlayingAudio ? 'anim-3' : ''}`} />
+                </div>
+                <span className="floating-music-title">{post.audioTrack}</span>
+              </div>
             )}
           </div>
         )}

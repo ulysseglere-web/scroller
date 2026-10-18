@@ -120,7 +120,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         const matchQuote = p.quoteData?.quote.toLowerCase().includes(q) || p.quoteData?.author.toLowerCase().includes(q);
         const matchLoc = p.location?.toLowerCase().includes(q);
         const matchTags = p.tags?.some((t) => t.toLowerCase().includes(q));
-        return Boolean(matchCaption || matchNote || matchQuote || matchLoc || matchTags);
+        const matchAudio = p.audioTrack?.toLowerCase().includes(q) || p.audioArtist?.toLowerCase().includes(q);
+        return Boolean(matchCaption || matchNote || matchQuote || matchLoc || matchTags || matchAudio);
       });
     }
 

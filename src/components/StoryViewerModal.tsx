@@ -22,6 +22,11 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<number | null>(null);
 
+  // Swipe down to close physics (Instagram style)
+  const [dragOffsetY, setDragOffsetY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
+
   const stories = highlight?.stories || [];
   const currentStory = stories[currentSlideIndex];
 
@@ -31,6 +36,8 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
       setCurrentSlideIndex(0);
       setProgress(0);
       setIsPaused(false);
+      setDragOffsetY(0);
+      setIsDragging(false);
     }
   }, [isOpen, highlight?.id]);
 
@@ -77,11 +84,6 @@ export const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   }, [isOpen, currentSlideIndex, stories.length]);
 
   if (!isOpen || !highlight || stories.length === 0) return null;
-
-  // Swipe down to close physics (Instagram style)
-  const [dragOffsetY, setDragOffsetY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsPaused(true);

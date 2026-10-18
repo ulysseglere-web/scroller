@@ -21,7 +21,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   const filtered = archivedPosts.filter((p) => {
     if (filterType === 'all') return true;
     if (filterType === 'photos') return p.type === 'photo' || p.type === 'carousel';
-    if (filterType === 'videos') return p.type === 'video';
+    if (filterType === 'videos') return p.type === 'video' || p.type === 'reel';
     if (filterType === 'notes') return p.type === 'note';
     if (filterType === 'quotes') return p.type === 'quote';
     if (filterType === 'links') return p.type === 'link';
@@ -81,14 +81,21 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
             return (
               <div key={post.id} className="archived-item-card">
                 {/* Media thumbnail */}
-                {post.mediaUrls && post.mediaUrls[0] && (
+                {post.mediaUrls && post.mediaUrls[0] ? (
                   <div
                     className="archived-thumb"
                     onClick={() => onOpenMediaViewer(post.mediaUrls || [], 0)}
                   >
                     <img src={post.mediaUrls[0]} alt="Miniature" />
                   </div>
-                )}
+                ) : post.videoUrl ? (
+                  <div
+                    className="archived-thumb archived-thumb-video"
+                    onClick={() => onOpenMediaViewer([post.videoUrl!], 0)}
+                  >
+                    <video src={post.videoUrl} muted playsInline preload="metadata" />
+                  </div>
+                ) : null}
 
                 {/* Content preview */}
                 <div className="archived-content-info">

@@ -39,7 +39,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
       // Type filter
       if (selectedType === 'favorites' && !p.isFavorite) return false;
       if (selectedType === 'photos' && p.type !== 'photo' && p.type !== 'carousel') return false;
-      if (selectedType === 'videos' && p.type !== 'video') return false;
+      if (selectedType === 'videos' && p.type !== 'video' && p.type !== 'reel') return false;
       if (selectedType === 'notes' && p.type !== 'note') return false;
       if (selectedType === 'quotes' && p.type !== 'quote') return false;
       if (selectedType === 'links' && p.type !== 'link') return false;
@@ -51,6 +51,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
       const matchTags = p.tags?.some((t) => t.toLowerCase().includes(q));
       const matchLocation = p.location?.toLowerCase().includes(q);
       const matchAnnotation = p.privateAnnotation?.toLowerCase().includes(q);
+      const matchAudio = p.audioTrack?.toLowerCase().includes(q) || p.audioArtist?.toLowerCase().includes(q);
 
       const matchNote = p.noteBody?.toLowerCase().includes(q);
       const matchQuote =
@@ -68,6 +69,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
         matchTags ||
         matchLocation ||
         matchAnnotation ||
+        matchAudio ||
         matchNote ||
         matchQuote ||
         matchLink
