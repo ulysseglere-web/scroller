@@ -17,6 +17,14 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
 }) => {
   if (!isOpen || !post) return null;
 
+  return <EditPostForm post={post} onClose={onClose} onSave={onSave} />;
+};
+
+const EditPostForm: React.FC<{
+  post: PostItem;
+  onClose: () => void;
+  onSave: (updatedPost: PostItem) => void;
+}> = ({ post, onClose, onSave }) => {
   const [caption, setCaption] = useState(post.caption || '');
   const [tagsInput, setTagsInput] = useState(post.tags ? post.tags.join(', ') : '');
   const [location, setLocation] = useState(post.location || '');

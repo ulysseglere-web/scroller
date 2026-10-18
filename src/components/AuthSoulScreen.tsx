@@ -272,6 +272,14 @@ export const AuthSoulScreen: React.FC<AuthSoulScreenProps> = ({
 
   return (
     <div className="classe-page-wrapper">
+      {/* Dynamic Ambient Fluid Light & Texture for Liquid Glass */}
+      <div className="liquid-glass-atmosphere" aria-hidden="true">
+        <div className="liquid-orb liquid-orb-1" />
+        <div className="liquid-orb liquid-orb-2" />
+        <div className="liquid-orb liquid-orb-3" />
+        <div className="liquid-grain" />
+      </div>
+
       {/* 1. Header Minimaliste & Prestigieux */}
       <header className="classe-navbar">
         <div className="classe-brand">

@@ -1,75 +1,192 @@
 :root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f4f4f5;
-  --bg-elevated: #ffffff;
-  --bg-card: rgba(255, 255, 255, 0.92);
-  --bg-hover: rgba(0, 0, 0, 0.05);
+  --bg-primary: #f8f9fc;
+  --bg-secondary: #eef1f6;
+  --bg-elevated: rgba(255, 255, 255, 0.85);
+  --bg-card: rgba(255, 255, 255, 0.75);
+  --bg-hover: rgba(0, 0, 0, 0.04);
   
-  --border-color: rgba(0, 0, 0, 0.12);
-  --border-subtle: rgba(0, 0, 0, 0.06);
-  --border-glass: rgba(0, 0, 0, 0.15);
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-subtle: rgba(0, 0, 0, 0.05);
+  --border-glass: rgba(255, 255, 255, 0.8);
   
-  --header-bg: rgba(255, 255, 255, 0.88);
-  --dock-bg: rgba(255, 255, 255, 0.92);
+  --header-bg: rgba(255, 255, 255, 0.75);
+  --dock-bg: rgba(255, 255, 255, 0.82);
   
-  --text-primary: #000000;
+  --text-primary: #09090b;
   --text-secondary: #52525b;
-  --text-tertiary: #a1a1aa;
+  --text-tertiary: #94a3b8;
   
   --accent-primary: #ff1e27;
   --accent-inverted: #ffffff;
   --accent-electric: #ff1e27;
-  --accent-glow: rgba(255, 30, 39, 0.2);
+  --accent-glow: rgba(255, 30, 39, 0.22);
   
   --danger: #ff1e27;
-  --success: #ffffff;
+  --success: #10b981;
   
   --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --font-display: 'Space Grotesk', var(--font-ui);
 
-  --nav-height: 56px;
-  --header-height: 54px;
+  --nav-height: 60px;
+  --header-height: 56px;
   
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-card: 26px;
   --radius-pill: 9999px;
+  --radius-dock: 9999px;
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
-  --shadow-float: 0 16px 40px rgba(0, 0, 0, 0.12);
-  --shadow-glow: 0 0 20px rgba(255, 30, 39, 0.25);
+  /* Liquid Glass Light Tokens */
+  --liquid-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 247, 252, 0.7) 100%);
+  --liquid-glass-card: linear-gradient(160deg, rgba(255, 255, 255, 0.85) 0%, rgba(242, 245, 250, 0.72) 100%);
+  --liquid-glass-dock: linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(240, 243, 250, 0.82) 100%);
+  --liquid-glass-header: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 254, 0.78) 100%);
+  --liquid-glass-elevated: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 247, 252, 0.88) 100%);
+  
+  --liquid-border: 1px solid rgba(255, 255, 255, 0.85);
+  --liquid-border-subtle: 1px solid rgba(0, 0, 0, 0.06);
+  --liquid-specular-bevel: inset 0 1px 2px 0 rgba(255, 255, 255, 1), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.04);
+  --liquid-specular-soft: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9);
+  
+  --liquid-blur: blur(32px) saturate(200%) contrast(102%);
+  --liquid-blur-deep: blur(48px) saturate(210%);
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 10px 30px -6px rgba(0, 0, 0, 0.06);
+  --shadow-float: 0 20px 48px -10px rgba(0, 0, 0, 0.09), inset 0 1px 2px 0 #ffffff;
+  --shadow-dock: 0 24px 50px -12px rgba(0, 0, 0, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.95), 0 0 20px rgba(255, 30, 39, 0.08);
+  --shadow-glow: 0 0 24px rgba(255, 30, 39, 0.2);
 }
 
 [data-theme="dark"] {
-  --bg-primary: #000000;
-  --bg-secondary: #08080a;
-  --bg-elevated: #101012;
-  --bg-card: rgba(12, 12, 14, 0.88);
-  --bg-hover: rgba(255, 255, 255, 0.08);
+  --bg-primary: #060608;
+  --bg-secondary: #0c0c10;
+  --bg-elevated: rgba(22, 22, 28, 0.85);
+  --bg-card: rgba(18, 18, 24, 0.72);
+  --bg-hover: rgba(255, 255, 255, 0.06);
   
   --border-color: rgba(255, 255, 255, 0.12);
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-glass: rgba(255, 255, 255, 0.18);
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-glass: rgba(255, 255, 255, 0.16);
   
-  --header-bg: rgba(0, 0, 0, 0.88);
-  --dock-bg: rgba(0, 0, 0, 0.95);
+  --header-bg: rgba(12, 12, 16, 0.75);
+  --dock-bg: rgba(16, 16, 22, 0.82);
 
-  --text-primary: #ffffff;
+  --text-primary: #fcfcfd;
   --text-secondary: #a1a1aa;
   --text-tertiary: #71717a;
 
   --accent-primary: #ff1e27;
-  --accent-inverted: #000000;
-  --accent-electric: #ff1e27;
-  --accent-glow: rgba(255, 30, 39, 0.3);
+  --accent-inverted: #ffffff;
+  --accent-electric: #ff2a33;
+  --accent-glow: rgba(255, 30, 39, 0.35);
 
-  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.8);
-  --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.9);
-  --shadow-float: 0 20px 50px rgba(0, 0, 0, 0.95);
-  --shadow-glow: 0 0 30px rgba(255, 30, 39, 0.35);
+  /* Liquid Glass Dark Tokens */
+  --liquid-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  --liquid-glass-card: linear-gradient(160deg, rgba(24, 24, 32, 0.70) 0%, rgba(13, 13, 17, 0.84) 100%);
+  --liquid-glass-dock: linear-gradient(135deg, rgba(26, 26, 36, 0.78) 0%, rgba(12, 12, 16, 0.90) 100%);
+  --liquid-glass-header: linear-gradient(180deg, rgba(18, 18, 24, 0.80) 0%, rgba(10, 10, 14, 0.90) 100%);
+  --liquid-glass-elevated: linear-gradient(145deg, rgba(34, 34, 44, 0.85) 0%, rgba(18, 18, 24, 0.94) 100%);
+
+  --liquid-border: 1px solid rgba(255, 255, 255, 0.14);
+  --liquid-border-subtle: 1px solid rgba(255, 255, 255, 0.08);
+  --liquid-specular-bevel: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.32), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.5);
+  --liquid-specular-soft: inset 0 1px 1px 0 rgba(255, 255, 255, 0.18);
+
+  --liquid-blur: blur(36px) saturate(210%) contrast(105%);
+  --liquid-blur-deep: blur(48px) saturate(220%) contrast(106%);
+
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 12px 36px -8px rgba(0, 0, 0, 0.75);
+  --shadow-float: 0 24px 60px -12px rgba(0, 0, 0, 0.85), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.28);
+  --shadow-dock: 0 24px 50px -10px rgba(0, 0, 0, 0.9), 0 0 24px rgba(255, 30, 39, 0.15), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.42);
+  --shadow-glow: 0 0 35px rgba(255, 30, 39, 0.35);
+}
+
+/* ============================================================ */
+/* LIQUID GLASS ATMOSPHERE (Ambient fluid light behind glass)   */
+/* ============================================================ */
+.liquid-glass-atmosphere {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.85;
+}
+
+[data-theme="light"] .liquid-glass-atmosphere {
+  opacity: 0.45;
+}
+
+.liquid-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(85px);
+  will-change: transform, opacity;
+}
+
+.liquid-orb-1 {
+  top: -10%;
+  right: -5%;
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(255, 30, 39, 0.22) 0%, rgba(255, 30, 39, 0) 70%);
+  animation: liquidOrbFloat1 18s ease-in-out infinite alternate;
+}
+
+.liquid-orb-2 {
+  bottom: 5%;
+  left: -8%;
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, rgba(130, 50, 240, 0.18) 0%, rgba(130, 50, 240, 0) 70%);
+  animation: liquidOrbFloat2 22s ease-in-out infinite alternate;
+}
+
+.liquid-orb-3 {
+  top: 42%;
+  left: 30%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255, 110, 30, 0.10) 0%, rgba(255, 110, 30, 0) 70%);
+  animation: liquidOrbFloat3 26s ease-in-out infinite alternate;
+}
+
+/* Subtle physical frosted grain texture */
+.liquid-grain {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+@keyframes liquidOrbFloat1 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-40px, 60px) scale(1.12); }
+  100% { transform: translate(30px, 110px) scale(0.95); }
+}
+
+@keyframes liquidOrbFloat2 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(60px, -50px) scale(1.18); }
+  100% { transform: translate(20px, -90px) scale(0.92); }
+}
+
+@keyframes liquidOrbFloat3 {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+  50% { transform: translate(-50px, -40px) scale(1.15); opacity: 0.9; }
+  100% { transform: translate(40px, 50px) scale(0.9); opacity: 0.5; }
 }
 
 * {
@@ -77,6 +194,12 @@
   margin: 0;
   padding: 0;
   -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
 }
 
 html, body {
@@ -92,6 +215,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  touch-action: manipulation;
 }
 
 #root {
@@ -102,19 +226,7 @@ html, body {
   display: flex;
   flex-direction: column;
   background-color: var(--bg-primary);
-}
-
-/* Scrollbars */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 4px;
+  position: relative;
 }
 
 /* Animations */
@@ -155,15 +267,45 @@ button {
   align-items: center;
   justify-content: center;
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  touch-action: manipulation;
 }
 
 button:active {
   transform: scale(0.96);
 }
 
-input, textarea, select {
+/* Règle stricte anti-zoom automatique mobile (iOS Safari zoome si font-size < 16px) */
+input,
+textarea,
+select,
+[contenteditable],
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="search"],
+input[type="number"],
+input[type="url"],
+input[type="tel"],
+.quick-capture-input,
+.comment-clean-input,
+.search-main-input,
+.cmd-input,
+.form-field input,
+.form-field textarea,
+.classe-field-box input,
+.clean-caption-textarea,
+.note-freeform-textarea,
+.story-caption-input,
+.audio-track-input,
+.profile-search-input,
+.edit-modal-form input,
+.edit-modal-form textarea,
+.drawer-form textarea {
   font-family: inherit;
   color: inherit;
+  font-size: 16.5px !important;
+  font-size: max(16.5px, 1rem) !important;
+  touch-action: manipulation !important;
 }
 
 a {
