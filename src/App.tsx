@@ -587,14 +587,7 @@ export const App: React.FC = () => {
         {activeTab === 'home' && (
           <div className="feed-column-container">
             {/* Header */}
-            <Header
-              theme={theme}
-              onToggleTheme={handleToggleTheme}
-              onOpenRandomMemory={handleOpenRandomMemory}
-              onReshuffleFeed={() => setShuffleSeed((s) => s + 1)}
-              totalPostsCount={feedPosts.length}
-              onOpenCmd={() => setIsCmdOpen(true)}
-            />
+            <Header />
 
             {/* Pull to refresh floating indicator */}
             {(pullDistance > 0 || isPullRefreshing) && (

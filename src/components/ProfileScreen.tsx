@@ -22,9 +22,12 @@ import {
   ArrowUpWideNarrow,
   Calendar,
   List,
-  Layers
+  Layers,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import type { PostItem, UserProfile, StoryHighlight } from '../types';
+import { sound } from '../services/sound';
 
 interface ProfileScreenProps {
   profile: UserProfile;
@@ -62,6 +65,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [username, setUsername] = useState(profile.username);
   const [bio, setBio] = useState(profile.bio);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl);
+  const [soundEnabled, setSoundEnabled] = useState(sound.getEnabled());
 
   // Search & Chronological retrieval controls
   const [searchQuery, setSearchQuery] = useState('');
@@ -623,6 +627,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </div>
           </div>
           <button className="setting-action-btn">Basculer</button>
+        </div>
+
+        <div className="setting-row" onClick={() => {
+          const next = sound.toggle();
+          setSoundEnabled(next);
+        }}>
+          <div className="setting-info">
+            {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+            <div>
+              <div className="setting-name">Effets sonores</div>
+              <div className="setting-desc">{soundEnabled ? 'Sons d\'ambiance et haptiques activés' : 'Sons muets'}</div>
+            </div>
+          </div>
+          <button className="setting-action-btn">{soundEnabled ? 'Désactiver' : 'Activer'}</button>
         </div>
 
         <div className="setting-row" onClick={onExportBackup}>
