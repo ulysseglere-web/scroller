@@ -24,7 +24,8 @@ import {
   List,
   Layers,
   Volume2,
-  VolumeX
+  VolumeX,
+  Music
 } from 'lucide-react';
 import type { PostItem, UserProfile, StoryHighlight } from '../types';
 import { sound } from '../services/sound';
@@ -514,90 +515,149 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </div>
         ) : viewMode === 'grid' ? (
           /* Grid View (Instagram 3 columns + visual cells) */
-          <div className="profile-3col-grid">
-            {filteredProfilePosts.map((post) => (
-              <div
-                key={post.id}
-                className="profile-grid-item"
-                onClick={() => {
-                  if (post.mediaUrls && post.mediaUrls.length > 0) {
-                    onOpenMediaViewer(post.mediaUrls, 0);
-                  }
-                }}
-              >
-                {post.mediaUrls && post.mediaUrls.length > 0 ? (
-                  <img src={post.mediaUrls[0]} alt={post.caption || 'Souvenir'} />
-                ) : post.videoUrl ? (
-                  <div className="profile-reel-cell-compact">
-                    <Film size={22} />
-                  </div>
-                ) : (
-                  <div className={`saved-text-thumb theme-${post.noteStyle?.bgTheme || 'dark-monochrome'}`}>
-                    <p>{post.noteBody || post.quoteData?.quote || post.caption}</p>
-                  </div>
-                )}
+          <div className={activeTab === 'reels' ? 'profile-reels-grid' : 'profile-3col-grid'}>
+            {filteredProfilePosts.map((post) => {
+              const hasMedia = Boolean(post.mediaUrls && post.mediaUrls.length > 0);
+              const hasVideo = Boolean(post.videoUrl);
 
-                {post.type === 'carousel' && (
-                  <span className="profile-item-badge">❐</span>
-                )}
-                {post.type === 'video' && (
-                  <span className="profile-item-badge"><Play size={11} fill="#ffffff" /></span>
-                )}
+              const handleItemClick = () => {
+                if (hasMedia) {
+                  onOpenMediaViewer(post.mediaUrls!, 0);
+                } else if (hasVideo) {
+                  onOpenMediaViewer([post.videoUrl!], 0);
+                }
+              };
 
-                <div className="profile-grid-hover">
-                  <span className="grid-hover-date">
-                    {new Date(post.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                  </span>
-                  {post.isFavorite && <Heart size={16} fill="#ff1e27" color="#ff1e27" />}
+              return (
+                <div
+                  key={post.id}
+                  className="profile-grid-item"
+                  onClick={handleItemClick}
+                >
+                  {hasMedia ? (
+                    <img 
+                      src={post.mediaUrls![0]} 
+                      alt={post.caption || 'Souvenir'} 
+                      loading="lazy" 
+                    />
+                  ) : hasVideo ? (
+                    <video 
+                      src={post.videoUrl} 
+                      preload="metadata" 
+                      muted 
+                      playsInline 
+                    />
+                  ) : (
+                    <div className={`profile-note-grid-card theme-${post.noteStyle?.bgTheme || 'dark-monochrome'}`}>
+                      <span className="text-thumb-sign">{post.type === 'quote' ? '“' : '✦'}</span>
+                      <p className="text-thumb-excerpt">
+                        {post.noteBody || post.quoteData?.quote || post.caption || 'Pensée'}
+                      </p>
+                      {post.quoteData?.author && (
+                        <span className="text-thumb-author">— {post.quoteData.author}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Badges */}
+                  {post.type === 'carousel' && (
+                    <span className="profile-item-badge" title="Carrousel multi-photos">
+                      <Layers size={13} />
+                    </span>
+                  )}
+                  {(post.type === 'video' || post.type === 'reel' || hasVideo) && (
+                    <div className="profile-reel-overlay-badge">
+                      <Play size={12} fill="#ffffff" color="#ffffff" />
+                      {post.caption && <span className="reel-mini-caption">{post.caption}</span>}
+                    </div>
+                  )}
+                  {post.audioTrack && !hasVideo && (
+                    <span className="profile-item-audio-badge" title={post.audioTrack}>
+                      <Music size={11} />
+                    </span>
+                  )}
+
+                  {/* Hover overlay */}
+                  <div className="profile-grid-hover">
+                    <span className="grid-hover-date">
+                      {new Date(post.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    </span>
+                    {post.isFavorite && (
+                      <div className="grid-hover-stats">
+                        <Heart size={14} fill="#ff1e27" color="#ff1e27" />
+                        <span>1</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           /* Detailed Chronological List View */
           <div className="profile-chrono-list">
-            {filteredProfilePosts.map((post) => (
-              <div 
-                key={post.id} 
-                className="chrono-list-card"
-                onClick={() => {
-                  if (post.mediaUrls && post.mediaUrls.length > 0) {
-                    onOpenMediaViewer(post.mediaUrls, 0);
-                  }
-                }}
-              >
-                <div className="chrono-card-left">
-                  <span className="chrono-date-badge">
-                    {new Date(post.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </span>
-                  {post.mediaUrls && post.mediaUrls.length > 0 && (
-                    <div className="chrono-thumb-wrap">
-                      <img src={post.mediaUrls[0]} alt={post.caption} className="chrono-thumb-img" />
+            {filteredProfilePosts.map((post) => {
+              const hasMedia = Boolean(post.mediaUrls && post.mediaUrls.length > 0);
+              const hasVideo = Boolean(post.videoUrl);
+
+              const handleCardClick = () => {
+                if (hasMedia) {
+                  onOpenMediaViewer(post.mediaUrls!, 0);
+                } else if (hasVideo) {
+                  onOpenMediaViewer([post.videoUrl!], 0);
+                }
+              };
+
+              return (
+                <div 
+                  key={post.id} 
+                  className="chrono-list-card"
+                  onClick={handleCardClick}
+                >
+                  <div className="chrono-card-left">
+                    <span className="chrono-date-badge">
+                      {new Date(post.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </span>
+                    {hasMedia ? (
+                      <div className="chrono-thumb-wrap">
+                        <img src={post.mediaUrls![0]} alt={post.caption} className="chrono-thumb-img" />
+                      </div>
+                    ) : hasVideo ? (
+                      <div className="chrono-thumb-wrap chrono-video-wrap">
+                        <video src={post.videoUrl} muted playsInline preload="metadata" className="chrono-thumb-img" />
+                        <div className="chrono-play-icon"><Play size={12} fill="#ffffff" /></div>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="chrono-card-main">
+                    {post.noteBody ? (
+                      <p className="chrono-note-text">{post.noteBody}</p>
+                    ) : post.quoteData ? (
+                      <blockquote className="chrono-quote-text">« {post.quoteData.quote} » — {post.quoteData.author}</blockquote>
+                    ) : (
+                      <p className="chrono-caption-text">{post.caption || 'Sans légende'}</p>
+                    )}
+
+                    {post.audioTrack && (
+                      <div className="chrono-music-line">
+                        <Music size={11} /> <span>{post.audioTrack}</span>
+                      </div>
+                    )}
+
+                    {post.location && (
+                      <span className="chrono-location-tag">📍 {post.location}</span>
+                    )}
+                  </div>
+
+                  {post.isFavorite && (
+                    <div className="chrono-card-fav">
+                      <Heart size={15} fill="#ff1e27" color="#ff1e27" />
                     </div>
                   )}
                 </div>
-
-                <div className="chrono-card-main">
-                  {post.noteBody ? (
-                    <p className="chrono-note-text">{post.noteBody}</p>
-                  ) : post.quoteData ? (
-                    <blockquote className="chrono-quote-text">« {post.quoteData.quote} » — {post.quoteData.author}</blockquote>
-                  ) : (
-                    <p className="chrono-caption-text">{post.caption || 'Sans légende'}</p>
-                  )}
-
-                  {post.location && (
-                    <span className="chrono-location-tag">📍 {post.location}</span>
-                  )}
-                </div>
-
-                {post.isFavorite && (
-                  <div className="chrono-card-fav">
-                    <Heart size={15} fill="#ff1e27" color="#ff1e27" />
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

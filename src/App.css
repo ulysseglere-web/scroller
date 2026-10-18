@@ -3134,36 +3134,178 @@
 .profile-3col-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  gap: 3px;
+  width: 100%;
+}
+
+.profile-reels-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
   width: 100%;
 }
 
 .profile-grid-item {
   position: relative;
   aspect-ratio: 1;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-xs);
+  background: var(--bg-card);
   overflow: hidden;
   cursor: pointer;
+  border-radius: 3px;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  user-select: none;
 }
 
-.profile-grid-item img {
+.profile-reels-grid .profile-grid-item {
+  aspect-ratio: 9 / 16;
+}
+
+.profile-grid-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.profile-grid-item img,
+.profile-grid-item video {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.2s ease;
+  display: block;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.profile-grid-item:hover img {
-  transform: scale(1.04);
+.profile-grid-item:hover img,
+.profile-grid-item:hover video {
+  transform: scale(1.05);
 }
 
+/* Badges on profile items */
 .profile-item-badge {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 7px;
+  right: 7px;
   color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+  z-index: 2;
+}
+
+.profile-item-audio-badge {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
+  z-index: 2;
+}
+
+.profile-reel-overlay-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.8));
+  z-index: 2;
+}
+
+.reel-mini-caption {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 500;
+  max-width: 80px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.9;
+}
+
+/* Clean Note & Quote Grid Cards */
+.profile-note-grid-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+.profile-note-grid-card.theme-dark-monochrome {
+  background: linear-gradient(135deg, #1c1c22 0%, #0a0a0d 100%);
+  color: #f4f4f5;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-note-grid-card.theme-midnight-violet {
+  background: linear-gradient(135deg, #2e1065 0%, #0f051d 100%);
+  color: #f3e8ff;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.profile-note-grid-card.theme-deep-crimson {
+  background: linear-gradient(135deg, #450a0a 0%, #1a0202 100%);
+  color: #fee2e2;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.profile-note-grid-card.theme-emerald-abyss {
+  background: linear-gradient(135deg, #022c22 0%, #01140e 100%);
+  color: #d1fae5;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.profile-note-grid-card.theme-neon-cyan {
+  background: linear-gradient(135deg, #083344 0%, #02121a 100%);
+  color: #cffafe;
+  border: 1px solid rgba(6, 182, 212, 0.2);
+}
+
+.profile-note-grid-card.theme-warm-amber {
+  background: linear-gradient(135deg, #451a03 0%, #1a0801 100%);
+  color: #fef3c7;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.text-thumb-sign {
+  font-family: Georgia, serif;
+  font-size: 18px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.text-thumb-excerpt {
   font-size: 11px;
+  line-height: 1.4;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.text-thumb-author {
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .profile-grid-hover {
@@ -3172,74 +3314,62 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   opacity: 0;
-  transition: opacity 0.1s ease;
+  transition: opacity 0.15s ease;
+  z-index: 3;
+  pointer-events: none;
 }
 
 .profile-grid-item:hover .profile-grid-hover {
   opacity: 1;
 }
 
-/* Tab 2: Reels Vertical 9:16 Grid */
-.profile-reels-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-  width: 100%;
+.grid-hover-date {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #ffffff;
 }
 
-.profile-reel-cell {
+.grid-hover-stats {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #ffffff;
+}
+
+.chrono-music-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--accent-electric);
+  margin-top: 3px;
+}
+
+.chrono-thumb-wrap.chrono-video-wrap {
   position: relative;
-  aspect-ratio: 9/16;
-  background: #000000;
-  border-radius: var(--radius-xs);
-  overflow: hidden;
 }
 
-.reel-poster-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.reel-no-poster {
-  width: 100%;
-  height: 100%;
+.chrono-play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.65);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-tertiary);
-  background: var(--bg-hover);
-}
-
-.reel-cell-badge {
-  position: absolute;
-  bottom: 6px;
-  left: 6px;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  color: #ffffff;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.reel-caption-teaser {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  right: 6px;
-  font-size: 10px;
-  color: #ffffff;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 /* Tab 3: Notes & Quotes List */
